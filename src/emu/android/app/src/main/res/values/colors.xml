@@ -20,14 +20,19 @@
     <color name="light_color_config_card">#ffffff</color>
 
     <!--dark theme color-->
-    <color name="dark_color_primary">#262e37</color>
-    <color name="dark_color_primary_dark">#20272f</color>
-    <color name="dark_color_accent">#0099ff</color>
-    <color name="dark_color_background">#20272f</color>
+    <color name="dark_color_primary">#2b2b2b</color>
+    <color name="dark_color_primary_dark">#000000</color>
+    <color name="dark_color_accent">#1080dd</color>
+    <color name="dark_color_background">#0e0e0e</color>
     <color name="dark_color_text_primary">#ffffff</color>
     <color name="dark_color_spinner">#ffffff</color>
-    <color name="dark_color_text_secondary">#dedede</color>
-    <color name="dark_color_btn_bg_normal">#0099ff</color>
-    <color name="dark_color_btn_bg_pressed">#008bd1</color>
-    <color name="dark_color_config_card">#262e37</color>
+    <color name="dark_color_text_secondary">#b5b5b5</color>
+    <color name="dark_color_btn_bg_normal">#3d3d3d</color>
+    <color name="dark_color_btn_bg_pressed">#1080dd</color>
+    <color name="dark_color_config_card">#1c1c1c</color>
+
+    <!--Belle palette-->
+    <color name="belle_title_top">#4a4a4a</color>
+    <color name="belle_title_bottom">#2e2e2e</color>
+    <color name="belle_line">#3a3a3a</color>
 </resources>
