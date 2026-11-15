@@ -57,6 +57,10 @@
             </intent-filter>
         </activity>
         <provider
+            android:name=".belle.BelleAppsProvider"
+            android:authorities="com.github.eka2l1.dualstick.belle"
+            android:exported="true" />
+        <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"

@@ -48,6 +48,15 @@ public class KeyMapper {
         intDict.put(KeyEvent.KEYCODE_SOFT_RIGHT, Keycode.KEY_SOFT_RIGHT);
         intDict.put(KeyEvent.KEYCODE_CALL, Keycode.KEY_SEND);
         intDict.put(KeyEvent.KEYCODE_ENDCALL, Keycode.KEY_CLEAR);
+        // gamepad: A selects, X/B are the left/right soft keys (Options / Back), Y clears, Start/Select send/star
+        intDict.put(KeyEvent.KEYCODE_BUTTON_A, Keycode.KEY_FIRE);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_X, Keycode.KEY_SOFT_LEFT);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_B, Keycode.KEY_SOFT_RIGHT);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_Y, Keycode.KEY_CLEAR);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_START, Keycode.KEY_SEND);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_SELECT, Keycode.KEY_STAR);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_L1, Keycode.KEY_NUM1);
+        intDict.put(KeyEvent.KEYCODE_BUTTON_R1, Keycode.KEY_NUM3);
         return intDict;
     }
 }

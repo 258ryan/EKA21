@@ -136,6 +136,7 @@ public class EmulatorActivity extends AppCompatActivity {
     private SparseIntArray androidToSymbian;
     private ProfileModel params;
     private MenuItem actionScreenshot;
+    private com.github.eka2l1.belle.BelleHints belleHints;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -187,24 +188,12 @@ public class EmulatorActivity extends AppCompatActivity {
         File configDir = new File(Emulator.getConfigsDir(), uidStr);
         String defProfile = dataStore.getString(PREF_DEFAULT_PROFILE, null);
 
-        if (externalIntent && (params = ProfilesManager.loadConfig(configDir)) == null) {
-            Intent configIntent = new Intent(this, ConfigActivity.class);
-            Bundle extras;
-            if (launchFromFile) {
-                extras = new Bundle();
-                extras.putLong(KEY_APP_UID, uid);
-                extras.putString(KEY_APP_NAME, name);
-                extras.putString(KEY_DEVICE_CODE, deviceCode);
-            } else {
-                extras = Objects.requireNonNull(intent.getExtras());
-            }
-            extras.putString(KEY_ACTION, ACTION_EDIT);
-            configIntent.putExtras(extras);
-            startActivity(configIntent);
-            finish();
-            return;
-        } else {
-            params = ProfilesManager.loadConfigOrDefault(configDir, defProfile);
+        params = ProfilesManager.loadConfigOrDefault(configDir, defProfile);
+        if (externalIntent && params.isNew) {
+            // opened like an installed app: no setup screen, the Belle defaults (gamepad, no touch keyboard) are used and kept
+            com.github.eka2l1.belle.BelleDefaults.apply(params);
+            configDir.mkdirs();
+            ProfilesManager.saveConfig(params);
         }
 
         SurfaceView surfaceView = findViewById(R.id.surface_view);
@@ -245,6 +234,7 @@ public class EmulatorActivity extends AppCompatActivity {
 
         setActionBar(name);
         hideSystemUI();
+        belleHints = com.github.eka2l1.belle.BelleHints.attach(this);
 
         Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         displayWidth = display.getWidth();
@@ -722,6 +712,9 @@ public class EmulatorActivity extends AppCompatActivity {
         }
 
         private boolean onMappedKeyDown(int keyCode, KeyEvent event) {
+            if (belleHints != null && (event.getSource() & (InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_JOYSTICK)) != 0) {
+                belleHints.poke();
+            }
             if (shouldSuppressDpadKeyEvent(event)) {
                 return true;
             }
