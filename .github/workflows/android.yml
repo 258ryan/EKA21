@@ -9,14 +9,17 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src/emu/android
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-          submodules: recursive
+          path: overlay
+
+      # this repository is an overlay on upstream EKA2L1 (see src/external/bootstrap_from_upstream.bat):
+      # fetch upstream with its submodules, then lay the overlay's src/ over it
+      - name: Upstream EKA2L1 + overlay
+        run: |
+          git clone --depth 1 --recurse-submodules --shallow-submodules -j8 https://github.com/EKA2L1/EKA2L1.git eka
+          cp -a overlay/src/. eka/src/
 
       - uses: actions/setup-java@v4
         with:
@@ -29,14 +32,16 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;25.1.8937393" "cmake;3.22.1" >/dev/null
 
       - name: Build release
+        working-directory: eka/src/emu/android
         run: ./gradlew assembleRelease -PciArg='-DCI=ON' --no-daemon
 
       - name: Sign
+        working-directory: eka/src/emu/android
         run: |
           BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
           APK=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
           "$ANDROID_HOME/build-tools/$BT/zipalign" -f -p 4 "$APK" aligned.apk
-          "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks "$GITHUB_WORKSPACE/keystore/eka21.jks" --ks-pass pass:belleui1 --key-pass pass:belleui1 --out "$GITHUB_WORKSPACE/EKA21-Belle.apk" aligned.apk
+          "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks "$GITHUB_WORKSPACE/overlay/keystore/eka21.jks" --ks-pass pass:belleui1 --key-pass pass:belleui1 --out "$GITHUB_WORKSPACE/EKA21-Belle.apk" aligned.apk
 
       - uses: actions/upload-artifact@v4
         with:
