@@ -1,2 +1,3 @@
 include ':app'
+include ':belle'
 rootProject.name = "EKA2L1"

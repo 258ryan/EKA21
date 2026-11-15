@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 def getGitHash = { ->
     try {
@@ -26,7 +27,7 @@ android {
 
     defaultConfig {
         applicationId 'com.github.eka2l1.dualstick'
-        minSdk 21
+        minSdk 24
         targetSdk 34
         versionCode 15
         versionName '0.1.6-dualstick'
@@ -70,6 +71,10 @@ android {
         }
     }
 
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -96,6 +101,7 @@ android {
 dependencies {
     def camerax_version = '1.3.0-beta02'
 
+    implementation project(':belle')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
