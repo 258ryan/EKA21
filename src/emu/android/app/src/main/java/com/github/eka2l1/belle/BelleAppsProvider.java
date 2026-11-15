@@ -29,6 +29,9 @@ public class BelleAppsProvider extends ContentProvider {
     private List<AppItem> apps() {
         try {
             Emulator.initializeForShortcutLaunch(getContext());
+            if (!Emulator.isInitialized()) {
+                return new ArrayList<>();
+            }
             return Emulator.getAppsList().blockingGet();
         } catch (Throwable t) {
             return new ArrayList<>();
@@ -53,16 +56,21 @@ public class BelleAppsProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         MatrixCursor cur = new MatrixCursor(new String[]{"uid", "name", "device"});
+        List<AppItem> list = apps();
+        // the native device calls crash the whole process if the emulator did not start, so only ask once it did
+        if (!Emulator.isInitialized() || list.isEmpty()) {
+            return cur;
+        }
         String device = "";
         try {
             int id = Emulator.getCurrentDevice();
             String[] codes = Emulator.getDeviceFirmwareCodes();
-            if (id >= 0 && id < codes.length) {
+            if (codes != null && id >= 0 && id < codes.length) {
                 device = codes[id];
             }
         } catch (Throwable ignored) {
         }
-        for (AppItem a : apps()) {
+        for (AppItem a : list) {
             cur.addRow(new Object[]{a.getUid(), a.getTitle(), device});
         }
         return cur;
