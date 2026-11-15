@@ -18,7 +18,13 @@ jobs:
       # fetch upstream with its submodules, then lay the overlay's src/ over it
       - name: Upstream EKA2L1 + overlay
         run: |
-          git clone --depth 1 --recurse-submodules --shallow-submodules -j8 https://github.com/EKA2L1/EKA2L1.git eka
+          # pinned to the upstream commit this overlay was made against (newer upstream moved to the FFmpeg 7 API)
+          git init eka && cd eka
+          git remote add origin https://github.com/EKA2L1/EKA2L1.git
+          git fetch --depth 1 origin 455d232134a07ee235a65ab0002cc8e89f2e35b1
+          git checkout FETCH_HEAD
+          git submodule update --init --recursive --depth 1 -j8
+          cd ..
           cp -a overlay/src/. eka/src/
 
       - uses: actions/setup-java@v4
