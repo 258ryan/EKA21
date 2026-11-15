@@ -1,0 +1,286 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name" translatable="false">EKA2L1 Dual Stick</string>
+    <string name="error">Ошибка</string>
+    <string name="no_data">Нет данных</string>
+    <string name="search">Поиск</string>
+    <string name="about">О программе</string>
+    <string name="settings">Настройки</string>
+    <string name="packages">Установленные пакеты</string>
+    <string name="devices">Устройства</string>
+    <string name="switch_devices">Переключить устройства</string>
+    <string name="profiles">Профили</string>
+    <string name="processing">Обработка...</string>
+    <string name="completed">Выполнено!</string>
+    <string name="cancelled">Отменено</string>
+    <string name="remove">Удалить</string>
+    <string name="mount_sd">Подключить MMC/SD карту</string>
+    <string name="no_devices_found">Устройства не найдены</string>
+    <string name="exit">Выход</string>
+    <string name="rename">Переименовать</string>
+    <string name="save_log">Сохранить лог</string>
+    <string name="take_screenshot">Сделать скриншот</string>
+    <string name="screenshot">Скриншот</string>
+    <string name="take_screenshot_success">Скриншот сохранён в %s!</string>
+    <string name="take_screenshot_fail">Не удалось выполнить скриншот!</string>
+    <string name="opengl_required">Приложение требует OpenGL ES 3.0+.</string>
+    <string name="warning">Внимание</string>
+    <string name="scoped_storage_warning">Ваши пользовательские данные хранятся в папке, которая будет удалена при удалении приложения:
+</string>
+    <string name="install_ng_game">Установка игры N-Gage</string>
+    <string name="notify_dialog_title">Уведомление</string>
+    <string name="grid_app_list_mode">Режим сетки</string>
+    <string name="list_app_list_mode">Режим списка</string>
+    <string name="mounted_mmc_ok_and_use_id_in_folder_name">Выполнено! Использование MMC ID, найденное в имени папки.</string>
+    <string name="ng1_menu_title">N-Gage</string>
+    <string name="ng2_menu_title">N-Gage 2.0</string>
+    <string name="install_preconfigured_pack">Установить предварительно настроенный пакет</string>
+    <string name="delete_existing_data_title">Удалить все существующие данные</string>
+    <string name="delete_existing_data">Вы хотите удалить существующие данные эмулятора (устройства, приложения, игры,...)?</string>
+    <string name="delete_device_failed">Не удалось удалить устройство.</string>
+    <string name="delete_device_message">Удалить выбранное устройство? Будут удалены его папка ROM и запись в devices.yml.</string>
+    <string name="delete_device_title">Удалить устройство</string>
+    <string name="fail_to_install_preconfigured_pack">Не удалось установить предварительно настроенный пакет!</string>
+    <string name="fail_to_install_preconfigured_pack_and_rollback">Не удалось установить предварительно настроенный пакет! Сброс до старой информации!</string>
+    <string name="fail_to_export_preconfigured_pack">Не удалось экспортировать предварительно настроенный пакет!</string>
+    <string name="choose_installation_type">Выберите режим установки</string>
+    <string name="choose_installation_type_instruction">Использовать существующий набор данных для быстрого пополнения или после установки нового устройства с помощью прошивки.</string>
+    <string name="preconfigured_pack">Предварительно настроенный пакет</string>
+    <string name="rom_or_firmware">ROM/прошивка</string>
+    <string name="save_launch_file_success">Файл запуска сохранён как %s!</string>
+    <string name="install">Установить</string>
+    <string name="rescan_devices">Сканировать устройства</string>
+    <string name="device_dump">Дамп устройства</string>
+    <string name="rpkg" translatable="false">RPKG</string>
+    <string name="rom" translatable="false">ROM</string>
+    <string name="path_to_rpkg">Путь к RPKG</string>
+    <string name="path_to_rom">Путь к ROM</string>
+    <string name="firmware">Прошивка</string>
+    <string name="path_to_firmware">Путь к VPL</string>
+    <string name="install_method">Способ установки</string>
+    <string name="enter_new_name">Введите новое имя</string>
+    <string name="mode">Режим</string>
+    <string name="no_device_dialog_title">Нет установленных устройств!</string>
+    <string name="no_device_installed">Пожалуйста, установите устройство. Для установки необходимы файлы и ROM устройства Symbian.\n\nПримечание: Каждому приложению для запуска потребуется подходящее устройство Symbian.</string>
+    <string name="install_device_note_may_need_rpkg">Для устройств S60v2 или выше вам может потребоваться предоставить дополнительный файл RPKG. Всплывающее окно появится, если установщик определит необходимость в этом.</string>
+    <string name="recommended_devices_to_install">Рекомендованные устройства для установки</string>
+    <string name="wiki_info">Для получения дополнительной информации об установке устройств, пожалуйста, посетите нашу вики:</string>
+    <string name="wiki_link" translatable="false"> &lt;a href="https://eka2l1.miraheze.org/wiki/Official_Links"&gt;eka2l1.miraheze.org&lt;/a&gt;</string>
+    <string name="install_rpkg_corrupt">Указанный файл RPKG поврежден!</string>
+    <string name="install_rpkg_file_not_found">Указанный RPKG файл не может быть открыт!</string>
+    <string name="install_raw_dump_fail_to_copy">Не удалось скопировать сырой дамп файлов!</string>
+    <string name="install_rom_fail_to_copy">Не удалось скопировать ROM!</string>
+    <string name="install_rpkg_insufficent_size">RPKG файл слишком мал, дамп может быть не завершён!</string>
+    <string name="install_already_exist">Устройство для установки уже существует!</string>
+    <string name="install_product_determine_fail">Не удалось определить информацию о продукте!</string>
+    <string name="install_device_vpl_invalid_msg">Файл описания прошивки (VPL) неверен!</string>
+    <string name="install_device_rofs_corrupt_msg">ROFS файл поврежден!</string>
+    <string name="install_device_rom_corrupt_msg">ROM файл поврежден!</string>
+    <string name="install_device_fpsx_corrupt_msg">FPSX файл поврежден!</string>
+    <string name="pref_general_title">Общее</string>
+    <string name="pref_system_title">Система</string>
+    <string name="pref_android_title" translatable="false">Android</string>
+    <string name="pref_control_key_binding_sect_title">Назначение кнопок</string>
+    <string name="pref_theme">Тема</string>
+    <string name="pref_theme_light">Светлая</string>
+    <string name="pref_theme_dark">Тёмная</string>
+    <string name="pref_enable_virtual_keyboard">Включить виртуальную клавиатуру</string>
+    <string name="pref_enable_actionbar">Включить ActionBar</string>
+    <string name="pref_enable_statusbar">Включить статусбар</string>
+    <string name="pref_wakelock">Не отключать экран</string>
+    <string name="pref_enable_vibration">Включить вибрацию</string>
+    <string name="pref_emulator_dir">Рабочая папка</string>
+    <string name="pref_launch_file_dir">Каталог файла запуска</string>
+    <string name="pref_emulator_dir_cant_change">Невозможно изменить рабочую папку!</string>
+    <string name="pref_general_utilities_nearest_neighbor_filtering_msg">Включить фильтрацию методом ближайшего соседа</string>
+    <string name="pref_system_language_option_name">Язык</string>
+    <string name="pref_system_real_time_accuracy_str">Точность в реальном времени</string>
+    <string name="pref_system_real_time_accuracy_level_name_low">Низкий</string>
+    <string name="pref_system_real_time_accuracy_level_name_mid">Средний</string>
+    <string name="pref_system_real_time_accuracy_level_name_high">Высокий</string>
+    <string name="pref_system_time_delay_option_name">Время задержки</string>
+    <string name="pref_system_setting_inheritance_option_name">Наследование настроек</string>
+    <string name="pref_hal_imei_option_name" translatable="false">IMEI</string>
+    <string name="pref_mmc_id" translatable="false">MMC ID</string>
+    <string name="emulated_screen_rotation_item_name">Поворот экрана</string>
+    <string name="emulated_screen_refresh_rate_item_name">Частота обновления</string>
+    <string name="pref_device_display_name">Имя телефона</string>
+    <string name="hide_system_apps">Скрыть системные приложения</string>
+    <string name="pref_bt_netplay" translatable="false">Bluetooth Netplay</string>
+    <string name="pref_bt_netplay_direct_ips_manager">Менеджер прямых IP-адресов</string>
+    <string name="enter_address">Введите адрес</string>
+    <string name="address">Адрес</string>
+    <string name="port">Порт</string>
+    <string name="pref_bt_netplay_mode_off">Выкл.</string>
+    <string name="pref_bt_netplay_mode_direct_ip">Прямой IP-адрес</string>
+    <string name="pref_bt_netplay_mode_lan">Локальная сеть</string>
+    <string name="pref_bt_netplay_mode_server">Сервер</string>
+    <string name="pref_bt_netplay_enable_upnp">Включить UPnP (для публичной игры через IPv4)</string>
+    <string name="pref_bt_netplay_server_address">Адрес сервера</string>
+    <string name="pref_bt_netplay_password">Пароль</string>
+    <string name="pref_bt_netplay_port_offset">Смещение порта</string>
+    <string name="action_context_delete">Удалить</string>
+    <string name="action_context_rename">Переименовать</string>
+    <string name="action_context_shortcut">Создать ярлык</string>
+    <string name="action_context_launch_file">Создать файл запуска</string>
+    <string name="start">Пуск</string>
+    <string name="reset_settings">Сброс настроек</string>
+    <string name="reset_layout">Сброс раскладки</string>
+    <string name="load_profile">Загрузить профиль</string>
+    <string name="save_profile">Сохранить профиль</string>
+    <string name="pref_screen_options">Параметры экрана</string>
+    <string name="pref_scale_ratio">Масштаб(%)</string>
+    <string name="pref_background">Фон</string>
+    <string name="pref_background_image">Фоновое изображение</string>
+    <string name="pref_background_image_view">Просмотр</string>
+    <string name="pref_background_image_empty">Не задано</string>
+    <string name="pref_background_image_clear">Очистить</string>
+    <string name="pref_background_image_fail_to_set">Не удалось установить фоновое изображение!</string>
+    <string name="background_image">Фоновое изображение</string>
+    <string name="background_image_opacity">Непрозрачность фонового изображения</string>
+    <string name="background_image_keep_aspect_ratio">Сохранение соотношения сторон фонового изображения</string>
+    <string name="pref_virtual_keyboard_options">Виртуальная клавиатура</string>
+    <string name="pref_vk_show">Показывать клавиатуру</string>
+    <string name="pref_vk_feedback">Тактильный отклик</string>
+    <string name="pref_touch_input">Сенсорный ввод</string>
+    <string name="pref_vk_back">Кнопки</string>
+    <string name="pref_vk_fore">Надписи</string>
+    <string name="pref_vk_outline">Обводка</string>
+    <string name="pref_color_hint" translatable="false">RGB</string>
+    <string name="pref_vk_alpha">Непрозрачность: </string>
+    <string name="pref_vk_hide_delay">Скрывать через: </string>
+    <string name="pref_unit_ms">мс</string>
+    <string name="pref_vk_sel_fore">Надписи (Н)</string>
+    <string name="pref_vk_sel_back">Кнопки (Н)</string>
+    <string name="pref_sys_props">Системные параметры</string>
+    <string name="pref_orientation">Ориентация экрана</string>
+    <string name="pref_orientation_default">По умолчанию</string>
+    <string name="pref_orientation_auto">Автоматически</string>
+    <string name="pref_orientation_port">Портрет</string>
+    <string name="pref_orientation_land">Альбом</string>
+    <string name="pref_vk_type">Тип клавиатуры</string>
+    <string name="pref_vk_type_custom">Настраиваемая</string>
+    <string name="pref_vk_type_phone">Телефонная</string>
+    <string name="pref_vk_type_phone_arrows">Телефонная (стрелки)</string>
+    <string name="pref_vk_hide_hint">не скрывать</string>
+    <string name="pref_button_shape_title">Форма кнопок</string>
+    <string name="pref_button_shape_oval">Овальные</string>
+    <string name="pref_button_shape_rect">Прямоугольные</string>
+    <string name="pref_button_shape_round">Закруглённые</string>
+    <string name="pref_input_devices_title">Устройства ввода</string>
+    <string name="pref_screen_gravity">Расположение</string>
+    <string name="pref_screen_gravity_bottom">Снизу</string>
+    <string name="pref_screen_gravity_center">По центру</string>
+    <string name="pref_screen_gravity_left">Слева</string>
+    <string name="pref_screen_gravity_right">Справа</string>
+    <string name="pref_screen_gravity_top">Сверху</string>
+    <string name="pref_screen_scale_type">Масштабирование</string>
+    <string name="pref_screen_scale_type_fill">Во весь экран (игнорировать пропорции)</string>
+    <string name="pref_screen_scale_type_fit">Подогнать под экран (с сохранением пропорций)</string>
+    <string name="pref_screen_scale_type_fit_with_skin">Подогнать под экран (со скином N-Gage QD)</string>
+    <string name="pref_screen_scale_type_none">Оригинальное разрешение</string>
+    <string name="pref_screen_use_notch">Использовать вырез</string>
+    <string name="pref_screen_scale_use_shader">Использовать шейдер для масштабирования</string>
+    <string name="pref_screen_upscale_shader">Масштабирующий шейдер</string>
+    <string name="pref_screen_default_shader">По умолчанию</string>
+    <string name="default_label">"%s (стандартный)"</string>
+    <string name="not_saved_exists">Уже существует</string>
+    <string name="error_name">Введите название!</string>
+    <string name="set_as_default">Сделать стандартным</string>
+    <string name="edit">Настроить</string>
+    <string name="add">Добавить</string>
+    <string name="add_profile_description">Создать новый профиль</string>
+    <string name="enter_name">Введите название</string>
+    <string name="set_default_profile_description">Выбрать этот шаблон как стандартную настройку для всех приложений, которые будут устанавливаться позже</string>
+    <string name="error_name_exists">Уже есть, введите другое название</string>
+    <string name="extensive_logging">Подробное логирование</string>
+    <string name="virtual_key_left_soft" translatable="false">L</string>
+    <string name="virtual_key_right_soft" translatable="false">R</string>
+    <string name="virtual_key_d" translatable="false">D</string>
+    <string name="virtual_key_c" translatable="false">C</string>
+    <string name="virtual_key_left" translatable="false">←</string>
+    <string name="virtual_key_right" translatable="false">→</string>
+    <string name="virtual_key_up" translatable="false">↑</string>
+    <string name="virtual_key_down" translatable="false">↓</string>
+    <string name="virtual_key_f" translatable="false">F</string>
+    <string name="virtual_key_1" translatable="false">1</string>
+    <string name="virtual_key_2" translatable="false">2</string>
+    <string name="virtual_key_3" translatable="false">3</string>
+    <string name="virtual_key_4" translatable="false">4</string>
+    <string name="virtual_key_5" translatable="false">5</string>
+    <string name="virtual_key_6" translatable="false">6</string>
+    <string name="virtual_key_7" translatable="false">7</string>
+    <string name="virtual_key_8" translatable="false">8</string>
+    <string name="virtual_key_9" translatable="false">9</string>
+    <string name="virtual_key_0" translatable="false">0</string>
+    <string name="virtual_key_star" translatable="false">*</string>
+    <string name="virtual_key_pound" translatable="false">#</string>
+    <string name="mapping_dialog_title">Нажмите кнопку</string>
+    <string name="mapping_dialog_message" formatted="false">Текущий маппинг: %1$s</string>
+    <string name="reset_mapping">Сброс</string>
+    <string name="layout_edit_finished">Редактирование раскладки завершено</string>
+    <string name="layout_edit_finish">Завершить редактирование раскладки</string>
+    <string name="layout_edit_mode">Режим редактирования раскладки</string>
+    <string name="layout_scale_mode">Режим масштабирования раскладки</string>
+    <string name="layout_switch">Сменить раскладку</string>
+    <string name="hide_buttons">Скрыть кнопки</string>
+    <string name="confirmation_required">Требуется подтверждение</string>
+    <string name="force_close_confirmation">Принудительное закрытие приложения может привести к потере данных или даже полной его неработоспособности!\nПродолжить?</string>
+    <string name="log_saved">Лог успешно сохранён</string>
+    <string name="enter_text">Введите текст</string>
+    <string name="about_website" translatable="false">&lt;BR&gt;Website: &lt;a href="https://eka2l1.github.io"&gt;eka2l1.github.io&lt;/a&gt;</string>
+    <string name="about_github" translatable="false">&lt;BR&gt;GitHub: &lt;a href="https://github.com/EKA2L1/EKA2L1"&gt;github.com/EKA2L1/EKA2L1&lt;/a&gt;</string>
+    <string name="about_crowdin" translatable="false">&lt;BR&gt;Crowdin(translation): &lt;a href="https://crowdin.com/project/EKA2L1"&gt;crowdin.com/project/EKA2L1&lt;/a&gt;</string>
+    <string name="about_copyright" translatable="false">&lt;BR&gt;&lt;BR&gt;Copyright 2018-2024 EKA2L1 Team</string>
+    <string name="about_icon_author" translatable="false">dmolina007 &amp; Frenesi</string>
+    <string name="about_icon_by">&lt;BR&gt;Иконка от: </string>
+    <string name="about_special_thanks_title">Благодарности</string>
+    <string name="about_special_thanks_content">  - nikita36078 за публикации Android версии в Play Store и за свою помощь!&lt;BR&gt;  - Декораторы OG Symbian/N-Gage: BinPDA, pSyGAGE, Engage, zg, eskMaemo, BodyZ, Ilya Dianov, iCodeRUS, huellif, … за прекрасный вклад!&lt;BR&gt;  - Производители телефонов за создание замечательных Symbian-устройств: Nokia, Sony Ericsson, Samsung, Siemens, . .&lt;BR&gt;  - N-Gage сообщество Discord&lt;BR&gt;  - vk.com/Symbian_zone сообщество&lt;BR&gt;  - EKA2L1 сообщество Discord</string>
+    <string name="about_translator">Переводчики</string>
+    <string name="about_translator_content" translatable="false">- PhantomHorror (Українська, Беларуская, Русский)&lt;BR&gt;  - Federico Dispinzeri (ca0ss) (Italiano)&lt;BR&gt;  - Faalagorn (Polski)&lt;BR&gt;  - Nikita Shakarun (nikita36078) (Русский)&lt;BR&gt;  - Rex_sa (rex07) (العربية)&lt;BR&gt;  - Walisson Silva (w_alisson_gostoso) (português brasileiro)&lt;BR&gt;  - Allen Merlin (ShadowDumb) (简体中文)&lt;BR&gt;  - heydootdoot (Bahasa Indonesia)&lt;BR&gt;  - Ar1 (Ary404) (Bahasa Indonesia, 日本語)&lt;BR&gt;  - enriqueyair (FrenesiGG) (Español)&lt;BR&gt;  - නාමල් ජයසිංහ (nimnaya) (සිංහල)&lt;BR&gt;  - Patrick Mates (patmat99) (Deutsch, Français, Español)&lt;BR&gt;  - I HAVE GOT THE POWER (rimbado) (Azərbaycanca, Türkçe)&lt;BR&gt;  - Tauhid Alam Rifty (ChildishRifty7) (বাংলা)&lt;BR&gt;  - Div, mix (reymo.az) (Azərbaycanca, Türkçe)&lt;BR&gt;  - João (Sefhriloff) (Español, português brasileiro)&lt;BR&gt;  - Alexis Jhon Gaspar (Lucss21a) (Wikang Filipino, Bahasa Indonesia)&lt;BR&gt;  - Nokia64 (Español)&lt;BR&gt;  - Jaakko Saarikko (styxnix) (Suomi)&lt;BR&gt;  - Alonso Neto (AlonsoNeto) (português brasileiro)&lt;BR&gt;  - GiorgioHerbie (Italiano)&lt;BR&gt;  - Hafiz Mohamed (Apihplays) (Bahasa Melayu)&lt;BR&gt;  - ShahinF27 (Khan27) (Azərbaycanca)&lt;BR&gt;  - Alain Teulet (niala6433) (Français)&lt;BR&gt;  - Daichi (Daichix) (Français)&lt;BR&gt;  - Peter Tissen (Bigpet) (Deutsch)&lt;BR&gt;  - Reiju (Rejiu) (Polski, Română, Deutsch)&lt;BR&gt;  - Jeremy Belpois (JeremyBelpois) (Bahasa Indonesia)&lt;BR&gt;  - Steven Felix (stevenfelix505) (Bahasa Indonesia)&lt;BR&gt;  - OguzHans (symbianware) (Türkçe)&lt;BR&gt;  - mvenhaikal (Bahasa Indonesia)&lt;BR&gt;  - JCC (johncarreon2012) (简体中文)&lt;BR&gt;  - Huaji Nishikino (sky0hjh) (简体中文)&lt;BR&gt;  - Fire_Head (Українська)&lt;BR&gt;  - oqzhnyldz (Türkçe)&lt;BR&gt;  - sakirasci (Türkçe)&lt;BR&gt;  - zixing (zixing131) (简体中文)&lt;BR&gt;  - Aaron Feng (AaronFeng753) (简体中文)&lt;BR&gt;  - Никита Пикалов (keXa2008) (Русский)&lt;BR&gt;  - literalmente-game (português brasileiro)&lt;BR&gt;  - Osanosa (Українська)&lt;BR&gt;  - Arthur de Castro Silva (arthurion) (português brasileiro)&lt;BR&gt;  - Marco Steinhaeuser (kermie) (Deutsch)&lt;BR&gt;  - Trinh Manh Viet (manhviet) (Tiếng Việt)&lt;BR&gt;  - Foysal Bhuiyan (foysalbhuyian008) (简体中文)&lt;BR&gt;  - zesty (简体中文)&lt;BR&gt;  - sony_rich (sonyrich) (Tiếng Việt)&lt;BR&gt;  - artem78 (Русский)&lt;BR&gt;  - Văn Heo Quay Nguyễn (FDERROR) (Tiếng Việt)&lt;BR&gt;  - Cetaceaqua (简体中文)&lt;BR&gt;  - mp107 (Polski)&lt;BR&gt;  - Hiago Cardoso de Melo (bearusumyo) (português brasileiro)&lt;BR&gt;  - gwmgdemj (简体中文)&lt;BR&gt;  - Quakeman 0 (williampaiva021) (português brasileiro)&lt;BR&gt;  - Dede Kurniawan (CraX_Dev) (Bahasa Indonesia)&lt;BR&gt;  - NinPhi (Русский)&lt;BR&gt;  - Florin9doi (Română)&lt;BR&gt;  - artemka 333 (artemka333) (Беларуская)&lt;BR&gt;  - Korteks Korta (kortex.343434) (Türkçe)&lt;BR&gt;  - 123456sdfft (简体中文)&lt;BR&gt;  - crisanto valler (vallercrisanto) (Wikang Filipino)&lt;BR&gt;  - Saqala Bilaabayso (Saqala) (Polski)&lt;BR&gt;  - 115190 (Italiano)&lt;BR&gt;  - Олександр Лапин (maliar2014) (Русский)&lt;BR&gt;  - Huck Jones (huckleberrypie) (Wikang Filipino)&lt;BR&gt;  - Rachel Wang (rwang4064) (简体中文)&lt;BR&gt;  - Никита Шустол (QsFvn5bA4v) (Беларуская)&lt;BR&gt;  - Serkan Ağdeve (usta_serkan_06) (Türkçe)&lt;BR&gt;  - REMOVED_USER (Deutsch)&lt;BR&gt;  - Бато Батоболотов (Just_Bato) (Русский)&lt;BR&gt;  - හෙළබස සමූහය (HelaBasa) (සිංහල)&lt;BR&gt;  - Trần Nam Hải (E.GMR) (Tiếng Việt)&lt;BR&gt;  - GG Snake (dnfcf524) (简体中文)&lt;BR&gt;  - Khoirul Anam (Anam31) (Bahasa Indonesia)&lt;BR&gt;  - where where (wherewhere) (简体中文)&lt;BR&gt;  - XheroxJS (Español)&lt;BR&gt;  - Nicolas Augustin (nicolasaugustin.atlantis) (Français)&lt;BR&gt;  - Juan Ortiz (Kloido) (Español)&lt;BR&gt;  - mauricio toxqui citalan (mauriciotoxquicitalan) (Español)&lt;BR&gt;  - Sen Esguerra (videogameboy0783) (Wikang Filipino)&lt;BR&gt;  - Shahril Shahril (shahrilshahril609) (Bahasa Indonesia)&lt;BR&gt;  - Serkan Agdeve (serkanagdeve10) (Türkçe)&lt;BR&gt;  - Raziel Benjamin Zapata (razielben1504) (Español)&lt;BR&gt;  - Indra Saragosa (indrasaragosa946) (Bahasa Indonesia)&lt;BR&gt;  - My Talking Tom 2 Smash Hit Mod [No Pay 2 Win] (ctnhanhuy) (Tiếng Việt)&lt;BR&gt;  - CIssnei - (cissnei112) (简体中文)&lt;BR&gt;  - леонид поляков (leon412) (Русский)&lt;BR&gt;  - Johny19 Jonius19 (joniusjohny18) (Bahasa Melayu)&lt;BR&gt;  - 孙福玥 (sun2839266) (简体中文)&lt;BR&gt;  - Rumia (bagregsidoel) (Bahasa Indonesia)&lt;BR&gt;  - igor macedo (igor3891344467) (português brasileiro)&lt;BR&gt;  - Trong Thu Do (fewdspuckrito) (Tiếng Việt)&lt;BR&gt;</string>
+    <string name="version">Версия: </string>
+    <string name="recommended_devices_note">Примечание: Рекомендуется использовать прошивку для установки устройств с S60v3 и выше.</string>
+    <string name="recommended_devices_s60v1" translatable="false">S60v1: N-Gage</string>
+    <string name="recommended_devices_s60v2" translatable="false">S60v2: Nokia N70</string>
+    <string name="recommended_devices_s60v3" translatable="false">S60v3: Nokia 5320 XpressMusic, Nokia E5</string>
+    <string name="recommended_devices_s60v5" translatable="false">S60v5: Nokia 5800 XpressMusic, Nokia 5230</string>
+    <string name="recommended_devices_s3_belle" translatable="false">S^3, Belle: Nokia C7-00, Nokia X7-00</string>
+    <string name="install_ng_game_cant_find_data_folder">Невозможно найти папку с игровыми данными!</string>
+    <string name="install_ng_game_more_than_one_game">В данной папке находится более одной игры!</string>
+    <string name="install_ng_game_no_game_info_file">Файл информации об игре не существует в папке с игровой карточкой!</string>
+    <string name="install_ng_game_corrupted_game_info">Файл информации об игре поврежден. Пожалуйста, проверьте корректность ваших данных!</string>
+    <string name="select_app_list_mode">Choose view</string>
+    <string name="list_app_list_mode_2">2-column list</string>
+    <string name="list_app_list_mode_3">3-column list</string>
+    <string name="devices_management_menu">System management</string>
+    <string name="end_devices_menu">End device</string>
+    <string name="system_menu_title">System</string>
+    <string name="profiles_menu_title">Profiles</string>
+    <string name="install_preconfigured_pack_menu">Install preconfigured pack</string>
+    <string name="export_preconfigured_pack_menu">Экспортировать существующие данные</string>
+    <string name="export_preconfigured_pack_success">Предварительно настроенный пакет экспортирован: %1$s</string>
+    <string name="install_ng_game_menu">Install N-Gage Game</string>
+    <string name="mount_sd_menu">Mount N-Gage MMC/SD</string>
+    <string name="save_log_menu">Save log</string>
+    <string name="rename_app_reset_hint">Leave empty to restore the original name</string>
+
+
+    <!-- EKA2L1 DualStick 0.1.5: app delete/export/import -->
+    <string name="delete_app_title">Удалить приложение</string>
+    <string name="delete_app_message">Удалить «%1$s»? Приложение и его сохранённые данные будут удалены.</string>
+    <string name="delete_app_completed">Приложение удалено.</string>
+    <string name="delete_app_failed">Не удалось удалить приложение.</string>
+    <string name="action_context_export">Экспортировать</string>
+    <string name="export_app_completed">Приложение экспортировано: %1$s</string>
+    <string name="export_app_failed">Не удалось экспортировать приложение.</string>
+    <string name="export_app_processing">Экспорт приложения и сохранённых данных…</string>
+    <string name="import_app_action">Импортировать</string>
+    <string name="import_app_checking">Проверка резервной копии приложения…</string>
+    <string name="import_app_completed">Приложение импортировано: %1$s</string>
+    <string name="import_app_failed">Не удалось импортировать приложение. Существующие данные восстановлены.</string>
+    <string name="import_app_invalid">Выбранный файл не является допустимой резервной копией приложения EKA2L1.</string>
+    <string name="import_app_menu">Импорт резервной копии приложения/игры</string>
+    <string name="import_app_message">Импортировать %1$s (UID %2$s) вместе с сохранёнными данными?\n\n%3$d файлов, %4$s\nСуществующие файлы этого приложения будут перезаписаны.</string>
+    <string name="import_app_processing">Импорт приложения и сохранённых данных…</string>
+    <string name="import_app_title">Импортировать приложение</string>
+</resources>

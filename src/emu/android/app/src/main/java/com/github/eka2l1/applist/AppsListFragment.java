@@ -1,0 +1,1616 @@
+/*
+ * Copyright (c) 2020 EKA2L1 Team
+ *
+ * This file is part of EKA2L1 project.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.github.eka2l1.applist;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.net.Uri;
+import android.text.SpannableString;
+import android.text.format.Formatter;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.os.Bundle;
+import android.provider.DocumentsContract;
+import android.util.TypedValue;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
+import androidx.documentfile.provider.DocumentFile;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.github.eka2l1.R;
+import com.github.eka2l1.config.ConfigFragment;
+import com.github.eka2l1.config.ProfilesFragment;
+import com.github.eka2l1.emu.Emulator;
+import com.github.eka2l1.emu.EmulatorActivity;
+import com.github.eka2l1.info.AboutDialogFragment;
+import com.github.eka2l1.settings.AppDataStore;
+import com.github.eka2l1.settings.SettingsFragment;
+import com.github.eka2l1.util.FileUtils;
+import com.github.eka2l1.util.LogUtils;
+import com.github.eka2l1.util.ZipUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableCompletableObserver;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
+
+import static com.github.eka2l1.emu.Constants.*;
+
+import org.w3c.dom.Text;
+
+public class AppsListFragment extends Fragment {
+    private CompositeDisposable compositeDisposable;
+    private AppsListAdapter adapter;
+    private RecyclerView rvApplist;
+    private TextView tvEmptyList;
+    private TextView tvCurrentDeviceName;
+    private View fabContainer;
+    private DividerItemDecoration dividerItemDecoration;
+    private RecyclerView.ItemDecoration topSpacingDecoration;
+    private boolean initialControllerAlignedOffsetApplied;
+    private int preferredFocusedPosition = 0;
+    private boolean restartNeeded;
+    private AppItem pendingAppItem;
+    private AppItem pendingExportAppItem;
+    private int currentViewMode = AppsListAdapter.VIEW_MODE_LIST;
+
+    private static final String APP_RENAME_KEY_PREFIX = "apps.rename";
+
+    private static final int MIN_WIDTH_DP_FOR_2_COL = 600;
+    private static final int MIN_WIDTH_DP_FOR_3_COL = 840;
+    private final ActivityResultLauncher<String[]> openSisLauncher = registerForActivityResult(
+            FileUtils.getFilePicker(),
+            this::onSisResult);
+    private final ActivityResultLauncher<Void> openSDCardLauncher = registerForActivityResult(
+            FileUtils.getDirPicker(),
+            this::onSDCardResult);
+    private final ActivityResultLauncher<Void> openNGageGameLauncher = registerForActivityResult(
+            FileUtils.getDirPicker(),
+            this::onNGageGameResult
+    );
+    private final ActivityResultLauncher<String[]> openPreconfiguredPackZIPLauncher = registerForActivityResult(
+            FileUtils.getFilePicker(),
+            this::onPreconfiguredPackZIPResult);
+    private final ActivityResultLauncher<String[]> openAppBackupLauncher = registerForActivityResult(
+            FileUtils.getFilePicker(),
+            this::onAppBackupResult);
+    private final ActivityResultLauncher<Void> pickPreconfiguredPackExportDirectory = registerForActivityResult(
+            FileUtils.getDirPicker(true),
+            this::onPreconfiguredPackExportDirectoryResult);
+    private final ActivityResultLauncher<Void> pickAppExportDirectory = registerForActivityResult(
+            FileUtils.getDirPicker(true),
+            this::onAppExportDirectoryResult);
+    private final ActivityResultLauncher pickLaunchFileDirectory = registerForActivityResult(
+            FileUtils.getDirPicker(true),
+            this::onLaunchFileDirPickResult);
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        adapter = new AppsListAdapter(getContext());
+        compositeDisposable = new CompositeDisposable();
+        getParentFragmentManager().setFragmentResultListener(KEY_RESTART, this, (key, bundle) -> {
+            restartNeeded = true;
+        });
+        getParentFragmentManager().setFragmentResultListener(KEY_RESTART_IMMEDIATELY, this, (key, bundle) -> {
+            restart();
+        });
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_appslist, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        rvApplist = view.findViewById(R.id.rv_applist);
+        tvEmptyList = view.findViewById(R.id.tv_empty_list);
+        tvCurrentDeviceName = view.findViewById(R.id.tv_current_device_name);
+        fabContainer = view.findViewById(R.id.fab_container);
+
+        registerForContextMenu(rvApplist);
+
+        currentViewMode = loadViewMode();
+
+        rvApplist.setAdapter(adapter);
+        applyViewMode(view, currentViewMode);
+        attachControllerTopSnapListener();
+        attachSingleTapLaunchListener();
+
+        adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                boolean empty = adapter.getItemCount() == 0;
+
+                rvApplist.setVisibility(empty ? View.INVISIBLE : View.VISIBLE);
+                tvEmptyList.setVisibility(empty ? View.VISIBLE : View.INVISIBLE);
+            }
+        });
+
+        setHasOptionsMenu(true);
+        prepareApps();
+        ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(false);
+        actionBar.setTitle(R.string.app_name);
+
+        View fabInstallSis = view.findViewById(R.id.fab_install_sis);
+        View fabInstallNGage = view.findViewById(R.id.fab_install_ngage);
+
+        fabInstallSis.setOnClickListener(v -> openSisLauncher.launch(new String[]{".sis", ".sisx"}));
+        fabInstallNGage.setOnClickListener(v -> openNGageGameLauncher.launch(null));
+
+        if (fabContainer != null) {
+            fabContainer.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                    updateRecyclerBottomPadding());
+            fabContainer.post(this::updateRecyclerBottomPadding);
+        }
+
+    }
+
+    private int resolveDefaultViewMode() {
+        int widthDp = getResources().getConfiguration().screenWidthDp;
+
+        if (widthDp >= MIN_WIDTH_DP_FOR_3_COL) {
+            return AppsListAdapter.VIEW_MODE_LIST_3;
+        }
+        if (widthDp >= MIN_WIDTH_DP_FOR_2_COL) {
+            return AppsListAdapter.VIEW_MODE_LIST_2;
+        }
+        return AppsListAdapter.VIEW_MODE_LIST;
+    }
+
+    private int loadViewMode() {
+        AppDataStore store = AppDataStore.getAndroidStore();
+
+        if (store.contains(PREF_APP_LIST_VIEW_MODE)) {
+            return store.getInt(PREF_APP_LIST_VIEW_MODE, resolveDefaultViewMode());
+        }
+
+        if (store.contains(PREF_GRID_APP_LIST)) {
+            return store.getBoolean(PREF_GRID_APP_LIST, false)
+                    ? AppsListAdapter.VIEW_MODE_GRID
+                    : AppsListAdapter.VIEW_MODE_LIST;
+        }
+
+        return resolveDefaultViewMode();
+    }
+
+    private void saveViewMode(int mode) {
+        AppDataStore store = AppDataStore.getAndroidStore();
+        store.putInt(PREF_APP_LIST_VIEW_MODE, mode);
+        store.save();
+    }
+
+    private int getViewModeTitleResId(int viewMode) {
+        switch (viewMode) {
+            case AppsListAdapter.VIEW_MODE_LIST_2:
+                return R.string.list_app_list_mode_2;
+            case AppsListAdapter.VIEW_MODE_LIST_3:
+                return R.string.list_app_list_mode_3;
+            case AppsListAdapter.VIEW_MODE_GRID:
+                return R.string.grid_app_list_mode;
+            case AppsListAdapter.VIEW_MODE_LIST:
+            default:
+                return R.string.list_app_list_mode;
+        }
+    }
+
+    private int getItemsInFirstRow() {
+        switch (currentViewMode) {
+            case AppsListAdapter.VIEW_MODE_LIST_2:
+                return 2;
+            case AppsListAdapter.VIEW_MODE_LIST_3:
+                return 3;
+            case AppsListAdapter.VIEW_MODE_GRID:
+                return 4;
+            case AppsListAdapter.VIEW_MODE_LIST:
+            default:
+                return 1;
+        }
+    }
+
+    private void snapFirstRowToTopIfNeeded(@NonNull View focusedChild) {
+        if (rvApplist == null) {
+            return;
+        }
+
+        int position = rvApplist.getChildAdapterPosition(focusedChild);
+        if (position == RecyclerView.NO_POSITION || position >= getItemsInFirstRow()) {
+            return;
+        }
+
+        rvApplist.post(() -> {
+            int desiredTop = dpToPx(4);
+            int delta = focusedChild.getTop() - desiredTop;
+
+            if (Math.abs(delta) <= 1) {
+                return;
+            }
+
+            rvApplist.smoothScrollBy(0, delta);
+        });
+    }
+
+    private void attachControllerTopSnapListener() {
+        if (rvApplist == null) {
+            return;
+        }
+
+        rvApplist.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+            @Override
+            public void onChildViewAttachedToWindow(@NonNull View view) {
+                view.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (hasFocus) {
+                        int position = rvApplist.getChildAdapterPosition(v);
+                        if (position != RecyclerView.NO_POSITION) {
+                            preferredFocusedPosition = position;
+                        }
+                        snapFirstRowToTopIfNeeded(v);
+                    }
+                });
+            }
+
+            @Override
+            public void onChildViewDetachedFromWindow(@NonNull View view) {
+            }
+        });
+    }
+
+    private void attachSingleTapLaunchListener() {
+        if (rvApplist == null) {
+            return;
+        }
+
+        GestureDetector gestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(@NonNull MotionEvent e) {
+                View childView = rvApplist.findChildViewUnder(e.getX(), e.getY());
+                if (childView != null) {
+                    int position = rvApplist.getChildAdapterPosition(childView);
+                    if (position != RecyclerView.NO_POSITION) {
+                        preferredFocusedPosition = position;
+                    }
+
+                    childView.requestFocus();
+                    childView.requestFocusFromTouch();
+                    childView.post(childView::performClick);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onDown(@NonNull MotionEvent e) {
+                return false;
+            }
+        });
+
+        rvApplist.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                gestureDetector.onTouchEvent(e);
+                return false;
+            }
+        });
+    }
+
+    private void restorePreferredFocusIfNeeded() {
+        if (rvApplist == null || adapter == null || adapter.getItemCount() == 0) {
+            return;
+        }
+
+        int targetPosition = preferredFocusedPosition;
+        if (targetPosition < 0) {
+            return;
+        }
+
+        if (targetPosition >= adapter.getItemCount()) {
+            targetPosition = adapter.getItemCount() - 1;
+        }
+
+        final int finalTargetPosition = targetPosition;
+        rvApplist.post(() -> {
+            RecyclerView.LayoutManager layoutManager = rvApplist.getLayoutManager();
+            if (layoutManager == null) {
+                return;
+            }
+
+            View targetView = layoutManager.findViewByPosition(finalTargetPosition);
+            if (targetView == null) {
+                rvApplist.scrollToPosition(finalTargetPosition);
+                rvApplist.post(() -> {
+                    RecyclerView.LayoutManager innerLayoutManager = rvApplist.getLayoutManager();
+                    if (innerLayoutManager == null) {
+                        return;
+                    }
+
+                    View innerTargetView = innerLayoutManager.findViewByPosition(finalTargetPosition);
+                    if (innerTargetView != null) {
+                        innerTargetView.requestFocus();
+                        innerTargetView.requestFocusFromTouch();
+                    }
+                });
+                return;
+            }
+
+            targetView.requestFocus();
+            targetView.requestFocusFromTouch();
+        });
+    }
+
+    private void applyInitialControllerAlignedOffsetIfNeeded() {
+        if (initialControllerAlignedOffsetApplied || rvApplist == null || adapter == null || adapter.getItemCount() == 0) {
+            return;
+        }
+
+        initialControllerAlignedOffsetApplied = true;
+        rvApplist.post(() -> {
+            rvApplist.scrollToPosition(0);
+            rvApplist.requestFocus();
+
+            rvApplist.post(() -> {
+                RecyclerView.LayoutManager layoutManager = rvApplist.getLayoutManager();
+                if (layoutManager == null) {
+                    return;
+                }
+
+                View firstView = layoutManager.findViewByPosition(0);
+                if (firstView == null) {
+                    return;
+                }
+
+                firstView.setFocusable(true);
+                firstView.setFocusableInTouchMode(true);
+                firstView.requestFocus();
+                firstView.requestFocusFromTouch();
+            });
+        });
+    }
+
+    private void applyViewMode(@Nullable View view, int viewMode) {
+        if (view == null) {
+            view = getView();
+        }
+
+        Context context = (view != null) ? view.getContext() : requireContext();
+
+        updateRecyclerBottomPadding();
+
+        if (dividerItemDecoration != null) {
+            rvApplist.removeItemDecoration(dividerItemDecoration);
+        }
+
+        switch (viewMode) {
+            case AppsListAdapter.VIEW_MODE_LIST:
+                if (dividerItemDecoration == null) {
+                    dividerItemDecoration = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
+                }
+
+                rvApplist.setLayoutManager(new LinearLayoutManager(context));
+                rvApplist.addItemDecoration(dividerItemDecoration);
+                break;
+
+            case AppsListAdapter.VIEW_MODE_LIST_2:
+                rvApplist.setLayoutManager(new GridLayoutManager(context, 2));
+                break;
+
+            case AppsListAdapter.VIEW_MODE_LIST_3:
+                rvApplist.setLayoutManager(new GridLayoutManager(context, 3));
+                break;
+
+            case AppsListAdapter.VIEW_MODE_GRID:
+            default:
+                rvApplist.setLayoutManager(new GridLayoutManager(context, 4));
+                break;
+        }
+
+        currentViewMode = viewMode;
+        ensureTopSpacingDecoration();
+        adapter.setDisplayMode(viewMode);
+    }
+
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void ensureTopSpacingDecoration() {
+        if (rvApplist == null || topSpacingDecoration != null) {
+            return;
+        }
+
+        topSpacingDecoration = new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                int position = parent.getChildAdapterPosition(view);
+                if (position == RecyclerView.NO_POSITION) {
+                    return;
+                }
+
+                if (position < getItemsInFirstRow()) {
+                    outRect.top = dpToPx(4);
+                }
+            }
+        };
+
+        rvApplist.addItemDecoration(topSpacingDecoration);
+    }
+
+    private void updateRecyclerBottomPadding() {
+        if (rvApplist == null) {
+            return;
+        }
+
+        int bottomPadding = 0;
+
+        if (fabContainer != null) {
+            int extraSpacing = dpToPx(8);
+            bottomPadding = fabContainer.getHeight() + extraSpacing;
+        }
+
+        rvApplist.setPadding(0, 0, 0, bottomPadding);
+        rvApplist.setClipToPadding(false);
+        rvApplist.requestLayout();
+    }
+
+    private String getCurrentDeviceCode() {
+        int currentDeviceId = Emulator.getCurrentDevice();
+        String[] deviceCodes = Emulator.getDeviceFirmwareCodes();
+
+        if (deviceCodes != null && currentDeviceId >= 0 && currentDeviceId < deviceCodes.length) {
+            return deviceCodes[currentDeviceId];
+        }
+
+        return "default";
+    }
+
+    private String getCurrentDeviceDisplayName() {
+        int currentDeviceId = Emulator.getCurrentDevice();
+        String[] devices = Emulator.getDevices();
+
+        if (devices != null && currentDeviceId >= 0 && currentDeviceId < devices.length) {
+            String deviceName = devices[currentDeviceId];
+            if (deviceName != null) {
+                deviceName = deviceName.trim();
+                if (!deviceName.isEmpty()) {
+                    return deviceName;
+                }
+            }
+        }
+
+        String deviceCode = getCurrentDeviceCode();
+        return deviceCode != null ? deviceCode : "";
+    }
+
+    private void refreshCurrentDeviceName() {
+        if (tvCurrentDeviceName == null) {
+            return;
+        }
+
+        if (!Emulator.isInitialized()) {
+            tvCurrentDeviceName.setText("");
+            return;
+        }
+
+        tvCurrentDeviceName.setText(getCurrentDeviceDisplayName());
+    }
+
+    private String getAppRenameKey(long appUid) {
+        return APP_RENAME_KEY_PREFIX + "." + getCurrentDeviceCode() + "." + appUid;
+    }
+
+    private void applyCustomAppTitles(ArrayList<AppItem> appItems) {
+        AppDataStore dataStore = AppDataStore.getAndroidStore();
+
+        for (AppItem appItem : appItems) {
+            String renamedTitle = dataStore.getString(getAppRenameKey(appItem.getUid()), null);
+
+            if (renamedTitle != null && !renamedTitle.trim().isEmpty()) {
+                appItem.setTitle(renamedTitle);
+            }
+        }
+    }
+
+    private void showRenameAppDialog(AppItem appItem) {
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        @SuppressLint("InflateParams")
+        View dialogView = inflater.inflate(R.layout.dialog_change_name, null);
+
+        EditText editText = dialogView.findViewById(R.id.et_name);
+        editText.setText(appItem.getTitle());
+        editText.setSelectAllOnFocus(true);
+        editText.setSelection(0, appItem.getTitle().length());
+
+        TextView hintView = new TextView(requireContext());
+        hintView.setText(R.string.rename_app_reset_hint);
+        float density = getResources().getDisplayMetrics().density;
+        int paddingLeft = Math.round(24 * density);
+        int paddingTop = Math.round(8 * density);
+        int paddingRight = Math.round(24 * density);
+        int paddingBottom = Math.round(16 * density);
+        hintView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.addView(dialogView);
+        container.addView(hintView);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.enter_new_name)
+                .setView(container)
+                .create();
+
+        View positiveButton = dialogView.findViewById(R.id.bt_positive);
+        View negativeButton = dialogView.findViewById(R.id.bt_negative);
+
+        negativeButton.setOnClickListener(v -> dialog.dismiss());
+        positiveButton.setOnClickListener(v -> {
+            String newTitle = editText.getText().toString().replaceAll("[\r\n]+", " ").trim();
+            AppDataStore dataStore = AppDataStore.getAndroidStore();
+            String renameKey = getAppRenameKey(appItem.getUid());
+
+            if (newTitle.isEmpty()) {
+                dataStore.remove(renameKey);
+                appItem.setTitle(appItem.getOriginalTitle());
+            } else {
+                dataStore.putString(renameKey, newTitle);
+                appItem.setTitle(newTitle);
+            }
+
+            dataStore.save();
+            adapter.refreshItems();
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void openAppBackupPicker() {
+        openAppBackupLauncher.launch(new String[] { "*.zip" });
+    }
+
+    private void onAppBackupResult(String sourcePath) {
+        if (sourcePath == null) {
+            return;
+        }
+        inspectAppBackup(sourcePath);
+    }
+
+    @SuppressLint("CheckResult")
+    private void inspectAppBackup(String sourcePath) {
+        Context context = requireContext();
+        ProgressDialog dialog = new ProgressDialog(requireActivity());
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.import_app_checking));
+        dialog.show();
+
+        Disposable disposable = Single.fromCallable(() ->
+                        AppImportManager.inspectBackup(context, sourcePath))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<AppImportManager.ImportInfo>() {
+                    @Override
+                    public void onSuccess(@NonNull AppImportManager.ImportInfo info) {
+                        dialog.cancel();
+                        if (!isAdded()) {
+                            return;
+                        }
+                        showAppImportConfirmation(sourcePath, info);
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        dialog.cancel();
+                        e.printStackTrace();
+                        if (isAdded()) {
+                            Toast.makeText(context, R.string.import_app_invalid,
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+        compositeDisposable.add(disposable);
+    }
+
+    private void showAppImportConfirmation(String sourcePath,
+                                           AppImportManager.ImportInfo info) {
+        String formattedSize = Formatter.formatShortFileSize(requireContext(), info.totalBytes);
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.import_app_title)
+                .setMessage(getString(R.string.import_app_message,
+                        info.title, info.appUid, info.fileCount, formattedSize))
+                .setPositiveButton(R.string.import_app_action,
+                        (dialog, which) -> importAppBackup(sourcePath, info))
+                .setNegativeButton(android.R.string.cancel,
+                        (dialog, which) -> dialog.cancel())
+                .show();
+    }
+
+    @SuppressLint("CheckResult")
+    private void importAppBackup(String sourcePath, AppImportManager.ImportInfo info) {
+        Context context = requireContext();
+        ProgressDialog dialog = new ProgressDialog(requireActivity());
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.import_app_processing));
+        dialog.show();
+
+        Disposable disposable = Single.fromCallable(() ->
+                        AppImportManager.importBackup(context, sourcePath, info))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<AppImportManager.ImportInfo>() {
+                    @Override
+                    public void onSuccess(@NonNull AppImportManager.ImportInfo importedInfo) {
+                        dialog.cancel();
+                        if (!isAdded()) {
+                            return;
+                        }
+                        Toast.makeText(context,
+                                getString(R.string.import_app_completed, importedInfo.title),
+                                Toast.LENGTH_LONG).show();
+                        getParentFragmentManager().setFragmentResult(KEY_RESTART, new Bundle());
+                        restart();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        dialog.cancel();
+                        e.printStackTrace();
+                        if (isAdded()) {
+                            Toast.makeText(context, R.string.import_app_failed,
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+        compositeDisposable.add(disposable);
+    }
+
+    private void requestAppExport(AppItem appItem) {
+        pendingExportAppItem = appItem;
+        pickAppExportDirectory.launch(null);
+    }
+
+    private void onAppExportDirectoryResult(String destinationPath) {
+        AppItem appItem = pendingExportAppItem;
+        pendingExportAppItem = null;
+
+        if (destinationPath == null || appItem == null) {
+            return;
+        }
+
+        exportApp(appItem, destinationPath);
+    }
+
+    @SuppressLint("CheckResult")
+    private void exportApp(AppItem appItem, String destinationPath) {
+        Context context = requireContext();
+        Activity activity = requireActivity();
+
+        ProgressDialog dialog = new ProgressDialog(activity);
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.export_app_processing));
+        dialog.show();
+
+        Disposable disposable = Single.<String>fromCallable(() ->
+                        AppExportManager.exportApp(context, activity, appItem, destinationPath))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<String>() {
+                    @Override
+                    public void onSuccess(@NonNull String exportedFileName) {
+                        dialog.cancel();
+                        Toast.makeText(context,
+                                getString(R.string.export_app_completed, exportedFileName),
+                                Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        dialog.cancel();
+                        Toast.makeText(context, R.string.export_app_failed,
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+
+        compositeDisposable.add(disposable);
+    }
+
+    private void confirmDeleteApp(AppItem appItem) {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.delete_app_title)
+                .setMessage(getString(R.string.delete_app_message, appItem.getTitle()))
+                .setPositiveButton(R.string.action_context_delete,
+                        (dialog, which) -> deleteApp(appItem))
+                .setNegativeButton(android.R.string.cancel,
+                        (dialog, which) -> dialog.cancel())
+                .show();
+    }
+
+    @SuppressLint("CheckResult")
+    private void deleteApp(AppItem appItem) {
+        ProgressDialog dialog = new ProgressDialog(getActivity());
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.processing));
+        dialog.show();
+
+        Single.fromCallable(() -> Emulator.uninstallApp((int) appItem.getUid()))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<Boolean>() {
+                    @Override
+                    public void onSuccess(@NonNull Boolean deleted) {
+                        if (!deleted) {
+                            dialog.cancel();
+                            Toast.makeText(getContext(), R.string.delete_app_failed,
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        String uidStr = Long.toHexString(appItem.getUid()).toUpperCase(Locale.US);
+                        File configDir = new File(Emulator.getConfigsDir(), uidStr);
+                        FileUtils.deleteDirectory(configDir);
+
+                        AppDataStore dataStore = AppDataStore.getAndroidStore();
+                        dataStore.remove(getAppRenameKey(appItem.getUid()));
+                        dataStore.save();
+
+                        dialog.cancel();
+                        Toast.makeText(getContext(), R.string.delete_app_completed,
+                                Toast.LENGTH_SHORT).show();
+
+                        getParentFragmentManager().setFragmentResult(KEY_RESTART, new Bundle());
+                        restart();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        dialog.cancel();
+                        Toast.makeText(getContext(), R.string.delete_app_failed,
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void switchToDeviceList() {
+        DeviceListFragment deviceListFragment = new DeviceListFragment();
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.container, deviceListFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @SuppressLint("CheckResult")
+    private void prepareApps() {
+        ProgressDialog dialog = new ProgressDialog(getActivity());
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.processing));
+        dialog.show();
+        Single<ArrayList<AppItem>> appsSingle = Emulator.getAppsList();
+        appsSingle.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<ArrayList<AppItem>>() {
+                    @Override
+                    public void onSuccess(@NonNull ArrayList<AppItem> appItems) {
+                        applyCustomAppTitles(appItems);
+                        adapter.setItems(appItems);
+                        applyInitialControllerAlignedOffsetIfNeeded();
+                        refreshCurrentDeviceName();
+                        dialog.cancel();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        Toast.makeText(getContext(), R.string.no_devices_found, Toast.LENGTH_SHORT).show();
+                        dialog.cancel();
+
+                        AlertDialog installDeviceAskDialog = new AlertDialog.Builder(getActivity())
+                                .setTitle(R.string.no_device_dialog_title)
+                                .setMessage(R.string.no_device_installed)
+                                .setPositiveButton(R.string.install, (d, id) -> {
+                                    d.cancel();
+
+                                    new AlertDialog.Builder(getActivity())
+                                            .setTitle(R.string.choose_installation_type)
+                                            .setMessage(R.string.choose_installation_type_instruction)
+                                            .setPositiveButton(R.string.rom_or_firmware, (d2, id2) -> {
+                                                d2.cancel();
+                                                switchToDeviceList();
+                                            })
+                                            .setNegativeButton(R.string.preconfigured_pack, (d2, i2) -> {
+                                                d2.cancel();
+                                                openPreconfiguredZIPFilePicker();
+                                            })
+                                            .show();
+                                }).setNegativeButton(android.R.string.cancel, (d, id) -> d.cancel()).create();
+                        installDeviceAskDialog.show();
+                    }
+                });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (fabContainer != null) {
+            fabContainer.post(this::updateRecyclerBottomPadding);
+        }
+        refreshCurrentDeviceName();
+        restorePreferredFocusIfNeeded();
+        if (restartNeeded) {
+            restart();
+        }
+    }
+
+    private void restart() {
+        PackageManager packageManager = requireContext().getPackageManager();
+        Intent intent = packageManager.getLaunchIntentForPackage(requireContext().getPackageName());
+        ComponentName componentName = intent.getComponent();
+        Intent mainIntent = Intent.makeRestartActivityTask(componentName);
+        startActivity(mainIntent);
+        Runtime.getRuntime().exit(0);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.clear();
+    }
+
+    private void onSisResult(String path) {
+        if (!Emulator.isInitialized()) {
+            Toast.makeText(getContext(), R.string.error, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (path == null) {
+            return;
+        }
+        installApp(path);
+    }
+
+    private void onSDCardResult(String path) {
+        if (!Emulator.isInitialized()) {
+            Toast.makeText(getContext(), R.string.error, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (path == null) {
+            return;
+        }
+        mountSdCard(path);
+    }
+
+    private void onNGageGameResult(String path) {
+        if (!Emulator.isInitialized()) {
+            Toast.makeText(getContext(), R.string.error, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (path == null) {
+            return;
+        }
+        installNGageGame(path);
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @SuppressLint("CheckResult")
+    private void installApp(String path) {
+        Completable completable = Emulator.subscribeInstallApp(path);
+        completable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Toast.makeText(getContext(), R.string.completed, Toast.LENGTH_SHORT).show();
+                        restart();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        Toast.makeText(getContext(), R.string.error, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void mountSdCard(String path) {
+        if (path == null) {
+            return;
+        }
+
+        String folderName = FileUtils.getFilenameFromPath(getContext(), path);
+
+        Pattern cidPattern = Pattern.compile("[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+");
+        Matcher matcher = cidPattern.matcher(folderName);
+
+        boolean mmcIdFoundInFolderName = matcher.find();
+
+        Emulator.mountSdCard(path);
+
+        if (mmcIdFoundInFolderName) {
+            Emulator.setCurrentMMCID(matcher.group());
+            Toast.makeText(getContext(), R.string.mounted_mmc_ok_and_use_id_in_folder_name, Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getContext(), R.string.completed, Toast.LENGTH_SHORT).show();
+        }
+
+        prepareApps();
+    }
+
+    private void installNGageGame(String path) {
+        int result = Emulator.installNGageGame(path);
+        if (result == 0) {
+            Toast.makeText(getContext(), R.string.completed, Toast.LENGTH_SHORT).show();
+            restart();
+        } else {
+            int errorResId = R.string.error;
+            switch (result) {
+                case Emulator.INSTALL_NG_GAME_ERROR_NO_GAME_DATA_FOLDER:
+                    errorResId = R.string.install_ng_game_cant_find_data_folder;
+                    break;
+
+                case Emulator.INSTALL_NG_GAME_ERROR_MORE_THAN_ONE_DATA_FOLDER:
+                    errorResId = R.string.install_ng_game_more_than_one_game;
+                    break;
+
+                case Emulator.INSTALL_NG_GAME_ERROR_NO_GAME_REGISTERATION_INFO:
+                    errorResId = R.string.install_ng_game_no_game_info_file;
+                    break;
+
+                case Emulator.INSTALL_NG_GAME_ERROR_REGISTERATION_CORRUPTED:
+                    errorResId = R.string.install_ng_game_corrupted_game_info;
+                    break;
+
+                default:
+                    break;
+            }
+            Toast.makeText(getContext(), errorResId, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setViewModeMenuStatus(MenuItem item, int viewMode) {
+        item.setIcon(R.drawable.ic_grid_white);
+        item.setTitle(getViewModeTitleResId(viewMode));
+    }
+
+    private void showViewModeDialog(MenuItem item) {
+        final int[] modes = new int[] {
+                AppsListAdapter.VIEW_MODE_LIST,
+                AppsListAdapter.VIEW_MODE_LIST_2,
+                AppsListAdapter.VIEW_MODE_LIST_3,
+                AppsListAdapter.VIEW_MODE_GRID
+        };
+
+        final String[] labels = new String[] {
+                getString(R.string.list_app_list_mode),
+                getString(R.string.list_app_list_mode_2),
+                getString(R.string.list_app_list_mode_3),
+                getString(R.string.grid_app_list_mode)
+        };
+
+        int checkedItem = 0;
+        for (int i = 0; i < modes.length; i++) {
+            if (modes[i] == currentViewMode) {
+                checkedItem = i;
+                break;
+            }
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.select_app_list_mode)
+                .setSingleChoiceItems(labels, checkedItem, (dialog, which) -> {
+                    int selectedMode = modes[which];
+                    saveViewMode(selectedMode);
+                    applyViewMode(null, selectedMode);
+                    setViewModeMenuStatus(item, selectedMode);
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    private void styleMenuHeader(MenuItem item, int color) {
+        if (item == null || item.getTitle() == null) {
+            return;
+        }
+
+        SpannableString title = new SpannableString(item.getTitle());
+        title.setSpan(new ForegroundColorSpan(color), 0, title.length(), 0);
+        title.setSpan(new RelativeSizeSpan(0.88f), 0, title.length(), 0);
+        item.setTitle(title);
+    }
+
+    private CharSequence createSubMenuHeaderTitle(CharSequence title, int color) {
+        if (title == null) {
+            return null;
+        }
+
+        SpannableString headerTitle = new SpannableString(title);
+        headerTitle.setSpan(new ForegroundColorSpan(color), 0, headerTitle.length(), 0);
+        return headerTitle;
+    }
+
+    private int resolveThemeColor(int attrId, int fallbackColorResId) {
+        TypedValue typedValue = new TypedValue();
+        if (requireContext().getTheme().resolveAttribute(attrId, typedValue, true)) {
+            if (typedValue.resourceId != 0) {
+                return ContextCompat.getColor(requireContext(), typedValue.resourceId);
+            }
+            return typedValue.data;
+        }
+
+        return ContextCompat.getColor(requireContext(), fallbackColorResId);
+    }
+
+    @SuppressLint("CheckResult")
+    private void extractPreconfiguredPack(String inputPath, String destPath, String destPathTemp) {
+        InputStream sourceZipStream;
+
+        try {
+            sourceZipStream = getContext().getContentResolver().openInputStream(Uri.parse(inputPath));
+        } catch (FileNotFoundException ex) {
+            Toast.makeText(getContext(), R.string.fail_to_install_preconfigured_pack, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        ProgressDialog dialog = new ProgressDialog(getActivity());
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.processing));
+        dialog.show();
+
+        Single<Boolean> extractPackSingle = Single.create(emitter -> {
+           try {
+               ZipUtils.unzip(sourceZipStream, new File(destPathTemp));
+
+               if (destPath != null) {
+                    File destRealFile = new File(destPath);
+                    FileUtils.deleteDirectory(destRealFile);
+
+                    new File(destPathTemp + "/data").renameTo(destRealFile);
+                    FileUtils.deleteDirectory(new File(destPathTemp));
+               }
+           } catch (IOException io)
+           {
+               // Delete temporary folder
+               FileUtils.deleteDirectory(new File(destPathTemp));
+               emitter.onError(io);
+               return;
+           }
+
+           emitter.onSuccess(true);
+        });
+
+        extractPackSingle.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<Boolean>() {
+                    @SuppressLint("CheckResult")
+                    @Override
+                    public void onSuccess(@NonNull Boolean result) {
+                        Toast.makeText(getContext(), R.string.completed, Toast.LENGTH_SHORT).show();
+                        dialog.cancel();
+
+                        restart();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        Toast.makeText(getContext(), (destPath != null) ? R.string.fail_to_install_preconfigured_pack_and_rollback : R.string.fail_to_install_preconfigured_pack, Toast.LENGTH_LONG).show();
+                        dialog.cancel();
+                    }
+                });
+    }
+
+    private void onPreconfiguredPackZIPResult(String sourcePath) {
+        if (sourcePath == null) {
+            return;
+        }
+
+        String dataFolderPath = Emulator.getEmulatorDir() + "/data";
+        String dataFolderPathTemp = Emulator.getEmulatorDir() + "/data_temp";
+
+        File dataFolder = new File(dataFolderPath);
+
+        if (dataFolder.exists()) {
+            new AlertDialog.Builder(getContext())
+                    .setTitle(R.string.delete_existing_data_title)
+                    .setMessage(R.string.delete_existing_data)
+                    .setPositiveButton(android.R.string.yes, (d, i) -> {
+                        extractPreconfiguredPack(sourcePath, dataFolderPath, dataFolderPathTemp);
+                    })
+                    .setNegativeButton(android.R.string.cancel, (d, i) -> {
+                        Toast.makeText(getContext(), R.string.cancelled, Toast.LENGTH_SHORT).show();
+                    })
+                    .show();
+        } else {
+            extractPreconfiguredPack(sourcePath, null, Emulator.getEmulatorDir());
+        }
+    }
+
+    private void openPreconfiguredZIPFilePicker() {
+        openPreconfiguredPackZIPLauncher.launch(new String[] { "*.zip" });
+    }
+
+    private void openPreconfiguredPackExportDirectoryPicker() {
+        pickPreconfiguredPackExportDirectory.launch(null);
+    }
+
+    private String createPreconfiguredPackFileName() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmm", Locale.US);
+        return "eka2l1-preconfigured-" + dateFormat.format(new Date()) + ".zip";
+    }
+
+    @SuppressLint("CheckResult")
+    private void exportPreconfiguredPack(String destinationPath) {
+        if (destinationPath == null) {
+            return;
+        }
+
+        Context context = requireContext();
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        File dataFolder = new File(Emulator.getEmulatorDir(), "data");
+        if (!dataFolder.exists() || !dataFolder.isDirectory()) {
+            Toast.makeText(context, R.string.fail_to_export_preconfigured_pack, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String fileName = createPreconfiguredPackFileName();
+
+        ProgressDialog dialog = new ProgressDialog(getActivity());
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage(getText(R.string.processing));
+        dialog.show();
+
+        Single<String> exportPackSingle = Single.create(emitter -> {
+            OutputStream outputStream = null;
+
+            try {
+                if (destinationPath.startsWith("/")) {
+                    File destinationDirectory = new File(destinationPath);
+                    if (!destinationDirectory.exists() && !destinationDirectory.mkdirs()) {
+                        throw new IOException("Failed to create destination directory: " + destinationPath);
+                    }
+
+                    File destinationFile = new File(destinationDirectory, fileName);
+                    outputStream = new FileOutputStream(destinationFile, false);
+                } else {
+                    Uri persistableUri = Uri.parse(destinationPath);
+                    activity.getContentResolver().takePersistableUriPermission(persistableUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                    DocumentFile rootFile = DocumentFile.fromTreeUri(context, persistableUri);
+                    if (rootFile == null) {
+                        throw new IOException("Unable to access destination directory");
+                    }
+
+                    DocumentFile existingFile = rootFile.findFile(fileName);
+                    if (existingFile != null) {
+                        existingFile.delete();
+                    }
+
+                    DocumentFile zipFile = rootFile.createFile("application/zip", fileName);
+                    if (zipFile == null) {
+                        throw new IOException("Unable to create destination zip file");
+                    }
+
+                    outputStream = activity.getContentResolver().openOutputStream(zipFile.getUri(), "w");
+                    if (outputStream == null) {
+                        throw new IOException("Unable to open output stream for destination zip file");
+                    }
+                }
+
+                ZipUtils.zipDirectoryToStream(dataFolder, outputStream, "data");
+                emitter.onSuccess(fileName);
+            } catch (Exception exception) {
+                emitter.onError(exception);
+            } finally {
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+        });
+
+        exportPackSingle.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<String>() {
+                    @Override
+                    public void onSuccess(@NonNull String exportedFileName) {
+                        Toast.makeText(context,
+                                getString(R.string.export_preconfigured_pack_success, exportedFileName),
+                                Toast.LENGTH_LONG).show();
+                        dialog.cancel();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        Toast.makeText(context, R.string.fail_to_export_preconfigured_pack,
+                                Toast.LENGTH_LONG).show();
+                        dialog.cancel();
+                    }
+                });
+    }
+
+    private void onPreconfiguredPackExportDirectoryResult(String destinationPath) {
+        if (destinationPath == null) {
+            return;
+        }
+
+        exportPreconfiguredPack(destinationPath);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.main, menu);
+        final MenuItem searchItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        Disposable searchViewDisposable = Observable.create((ObservableOnSubscribe<String>) emitter -> {
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    emitter.onNext(query);
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    emitter.onNext(newText);
+                    return true;
+                }
+            });
+        }).debounce(300, TimeUnit.MILLISECONDS)
+                .map(String::toLowerCase)
+                .distinctUntilChanged()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(charSequence -> adapter.getFilter().filter(charSequence));
+        compositeDisposable.add(searchViewDisposable);
+
+        final MenuItem viewModeItem = menu.findItem(R.id.action_toggle_grid);
+        setViewModeMenuStatus(viewModeItem, currentViewMode);
+        viewModeItem.setOnMenuItemClickListener(item -> {
+            showViewModeDialog(item);
+            return true;
+        });
+
+        int secondaryMenuColor = resolveThemeColor(android.R.attr.textColorSecondary, R.color.dark_color_text_secondary);
+
+        MenuItem systemManagementItem = menu.findItem(R.id.action_devices_management);
+        if (systemManagementItem != null && systemManagementItem.getSubMenu() != null) {
+            systemManagementItem.getSubMenu().setHeaderTitle(
+                    createSubMenuHeaderTitle(systemManagementItem.getTitle(), secondaryMenuColor));
+        }
+
+        MenuItem nGageItem = menu.findItem(R.id.action_ngage_menu);
+        if (nGageItem != null && nGageItem.getSubMenu() != null) {
+            nGageItem.getSubMenu().setHeaderTitle(
+                    createSubMenuHeaderTitle(nGageItem.getTitle(), secondaryMenuColor));
+        }
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_about) {
+            AboutDialogFragment aboutDialogFragment = new AboutDialogFragment();
+            aboutDialogFragment.show(getParentFragmentManager(), "about");
+        } else if (itemId == R.id.action_settings) {
+            SettingsFragment settingsFragment = new SettingsFragment();
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.container, settingsFragment)
+                    .addToBackStack(null)
+                    .commit();
+        } else if (itemId == R.id.action_packages) {
+            PackageListFragment packageListFragment = new PackageListFragment();
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.container, packageListFragment)
+                    .addToBackStack(null)
+                    .commit();
+        } else if (itemId == R.id.action_devices || itemId == R.id.action_devices_overflow) {
+            switchToDeviceList();
+        } else if (itemId == R.id.action_mount_sd) {
+            openSDCardLauncher.launch(null);
+        } else if (itemId == R.id.action_save_log) {
+            try {
+                LogUtils.writeLog();
+                Toast.makeText(getActivity(), R.string.log_saved, Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(getActivity(), R.string.error, Toast.LENGTH_SHORT).show();
+            }
+        } else if (itemId == R.id.action_profiles) {
+            ProfilesFragment profilesFragment = new ProfilesFragment();
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.container, profilesFragment)
+                    .addToBackStack(null)
+                    .commit();
+        } else if (itemId == R.id.action_install_ng_game) {
+            openNGageGameLauncher.launch(null);
+        } else if (itemId == R.id.action_import_app_backup) {
+            openAppBackupPicker();
+        } else if (itemId == R.id.action_install_preconfigured_pack) {
+            openPreconfiguredZIPFilePicker();
+        } else if (itemId == R.id.action_export_preconfigured_pack) {
+            openPreconfiguredPackExportDirectoryPicker();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void addAppShortcut(AppItem item) {
+        // Get current device code
+        int currentDeviceId = Emulator.getCurrentDevice();
+        String[] deviceCode = Emulator.getDeviceFirmwareCodes();
+
+        if (currentDeviceId >= deviceCode.length) {
+            return;
+        }
+
+        Bitmap iconBitmap = item.getIcon();
+        IconCompat icon = null;
+
+        if (iconBitmap == null) {
+            icon = IconCompat.createWithResource(getActivity(), R.mipmap.ic_ducky_foreground);
+        } else {
+            int width = iconBitmap.getWidth();
+            int height = iconBitmap.getHeight();
+            ActivityManager am = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+            int iconSize = am.getLauncherLargeIconSize();
+            Rect src;
+            if (width > height) {
+                int left = (width - height) / 2;
+                src = new Rect(left, 0, left + height, height);
+            } else if (width < height) {
+                int top = (height - width) / 2;
+                src = new Rect(0, top, width, top + width);
+            } else {
+                src = null;
+            }
+            Bitmap scaled = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(scaled);
+            canvas.drawBitmap(iconBitmap, src, new RectF(0, 0, iconSize, iconSize), null);
+            icon = IconCompat.createWithBitmap(scaled);
+        }
+
+        Intent launchIntent = new Intent(Intent.ACTION_DEFAULT, null, getActivity(), EmulatorActivity.class);
+        launchIntent.putExtra(KEY_APP_UID, item.getUid());
+        launchIntent.putExtra(KEY_APP_NAME, item.getTitle());
+        launchIntent.putExtra(KEY_DEVICE_CODE, deviceCode[currentDeviceId]);
+        launchIntent.putExtra(KEY_APP_IS_SHORTCUT, true);
+
+        ShortcutInfoCompat shortcut = new ShortcutInfoCompat.Builder(getActivity(), item.getTitle())
+                .setIntent(launchIntent)
+                .setShortLabel(item.getTitle())
+                .setIcon(icon)
+                .build();
+
+        try {
+            ShortcutManagerCompat.requestPinShortcut(getActivity(), shortcut, null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void clearSavedLaunchFileDirectory() {
+        AppDataStore dataStore = AppDataStore.getAndroidStore();
+        dataStore.putString(PREF_LAUNCH_FILE_DIR, null);
+        dataStore.save();
+    }
+
+    private void requestLaunchFileDirectory(AppItem item) {
+        pendingAppItem = item;
+        pickLaunchFileDirectory.launch(null);
+    }
+
+    private void saveAppLaunchFileToDirectory(String path, AppItem item) {
+        if (path == null || item == null) {
+            return;
+        }
+
+        int currentDeviceId = Emulator.getCurrentDevice();
+        String[] deviceCode = Emulator.getDeviceFirmwareCodes();
+
+        if (deviceCode == null || currentDeviceId < 0 || currentDeviceId >= deviceCode.length) {
+            Toast.makeText(getContext(), R.string.error, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AppLaunchInfo launchInfo = new AppLaunchInfo(item.getUid(), item.getTitle(), deviceCode[currentDeviceId]);
+        String fileName = item.getTitle() + ".json";
+
+        try {
+            Uri treeUri = Uri.parse(path);
+            DocumentFile rootFile = DocumentFile.fromTreeUri(requireContext(), treeUri);
+
+            if (rootFile == null || !rootFile.exists() || !rootFile.canWrite()) {
+                clearSavedLaunchFileDirectory();
+                Toast.makeText(getContext(), R.string.error, Toast.LENGTH_LONG).show();
+                requestLaunchFileDirectory(item);
+                return;
+            }
+
+            DocumentFile jsonFile = rootFile.findFile(fileName);
+            if (jsonFile == null) {
+                jsonFile = rootFile.createFile("application/json", fileName);
+            }
+
+            if (jsonFile == null) {
+                Toast.makeText(getContext(), R.string.error, Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            try (OutputStream outputStream = requireActivity().getContentResolver().openOutputStream(jsonFile.getUri(), "wt")) {
+                if (outputStream == null) {
+                    throw new IOException("Failed to open output stream for launch file");
+                }
+
+                try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream)) {
+                    gson.toJson(launchInfo, outputStreamWriter);
+                    outputStreamWriter.flush();
+                }
+            }
+
+            Toast.makeText(getContext(), String.format(getString(R.string.save_launch_file_success), fileName),
+                    Toast.LENGTH_LONG).show();
+        } catch (SecurityException | IllegalArgumentException | IOException e) {
+            e.printStackTrace();
+            clearSavedLaunchFileDirectory();
+            Toast.makeText(getContext(), R.string.error, Toast.LENGTH_LONG).show();
+            requestLaunchFileDirectory(item);
+        }
+    }
+
+    private void onLaunchFileDirPickResult(String newPath) {
+        if (newPath == null) {
+            return;
+        }
+
+        try {
+            Uri persistableUri = Uri.parse(newPath);
+
+            requireActivity().getContentResolver().takePersistableUriPermission(persistableUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+            AppDataStore dataStore = AppDataStore.getAndroidStore();
+
+            dataStore.putString(PREF_LAUNCH_FILE_DIR, newPath);
+            dataStore.save();
+
+            saveAppLaunchFileToDirectory(newPath, pendingAppItem);
+        } catch (SecurityException | IllegalArgumentException e) {
+            e.printStackTrace();
+            clearSavedLaunchFileDirectory();
+            Toast.makeText(getContext(), R.string.error, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void saveAppLaunchFile(AppItem item) {
+        String launchFileDir = AppDataStore.getAndroidStore().getString(PREF_LAUNCH_FILE_DIR, null);
+        if (launchFileDir == null) {
+            requestLaunchFileDirectory(item);
+        } else {
+            saveAppLaunchFileToDirectory(launchFileDir, item);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        int index = AppItemViewHolder.contextIndex;
+        AppItem appItem = adapter.getItem(index);
+        if (item.getItemId() == R.id.action_context_settings) {
+            ConfigFragment configFragment = new ConfigFragment();
+            Bundle args = new Bundle();
+            args.putLong(KEY_APP_UID, appItem.getUid());
+            args.putString(KEY_APP_NAME, appItem.getTitle());
+            args.putString(KEY_ACTION, ACTION_EDIT);
+            configFragment.setArguments(args);
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.container, configFragment)
+                    .addToBackStack(null)
+                    .commit();
+        } else if (item.getItemId() == R.id.action_context_shortcut) {
+            addAppShortcut(appItem);
+        } else if (item.getItemId() == R.id.action_context_launch_file) {
+            saveAppLaunchFile(appItem);
+        } else if (item.getItemId() == R.id.action_context_rename) {
+            showRenameAppDialog(appItem);
+        } else if (item.getItemId() == R.id.action_context_export) {
+            requestAppExport(appItem);
+        } else if (item.getItemId() == R.id.action_context_delete) {
+            confirmDeleteApp(appItem);
+        }
+        return super.onContextItemSelected(item);
+    }
+}

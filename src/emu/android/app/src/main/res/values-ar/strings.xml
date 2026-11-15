@@ -1,0 +1,286 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name" translatable="false">EKA2L1 Dual Stick</string>
+    <string name="error">الخطأ</string>
+    <string name="no_data">لا بيانات</string>
+    <string name="search">ابحث</string>
+    <string name="about">عن</string>
+    <string name="settings">إعدادات</string>
+    <string name="packages">الحزم المثبتة</string>
+    <string name="devices">Device</string>
+    <string name="switch_devices">التبديل بين الاجهزة</string>
+    <string name="profiles">الملفات الشخصية</string>
+    <string name="processing">معالجة...</string>
+    <string name="completed">مكتملة!</string>
+    <string name="cancelled">لا تتبع المخزون</string>
+    <string name="remove">حذف</string>
+    <string name="mount_sd">تحميل بطاقة MMC/SD</string>
+    <string name="no_devices_found">لم يتم العثور على أجهزة</string>
+    <string name="exit">خروج</string>
+    <string name="rename">إعادة التسمية</string>
+    <string name="save_log">سجلات الحفظ</string>
+    <string name="take_screenshot">أخذ لقطة للشاشة</string>
+    <string name="screenshot">لقطة الشاشة</string>
+    <string name="take_screenshot_success">تم حفظ لقطة الشاشة إلى %s!</string>
+    <string name="take_screenshot_fail">فشل في التقاط لقطة الشاشة!</string>
+    <string name="opengl_required">يتطلب التطبيق OpenGL ES 3.0+.</string>
+    <string name="warning">تحذير</string>
+    <string name="scoped_storage_warning">يتم تخزين بيانات المستخدم الخاصة بك في موقع سيتم حذفه عند إلغاء تثبيت التطبيق:
+</string>
+    <string name="install_ng_game">تثبيت لعبة N-Gage</string>
+    <string name="notify_dialog_title">الإشعارات</string>
+    <string name="grid_app_list_mode">وضع الشبكة</string>
+    <string name="list_app_list_mode">وضع القائمة</string>
+    <string name="mounted_mmc_ok_and_use_id_in_folder_name">اكتمل! استخدام MMC معرف موجود في اسم المجلد.</string>
+    <string name="ng1_menu_title">N-Gage</string>
+    <string name="ng2_menu_title">N-Gage 2.0</string>
+    <string name="install_preconfigured_pack">تثبيت حزمة مكونة مسبقاً</string>
+    <string name="delete_existing_data_title">احذف البيانات الموجودة</string>
+    <string name="delete_existing_data">هل تريد حذف بيانات المحاكي الموجودة (الأجهزة، التطبيقات، الألعاب...)؟</string>
+    <string name="delete_device_failed">تعذر حذف الجهاز.</string>
+    <string name="delete_device_message">هل تريد حذف الجهاز المحدد؟ سيؤدي ذلك إلى إزالة مجلد ROM الخاص به وإدخاله في devices.yml.</string>
+    <string name="delete_device_title">حذف الجهاز</string>
+    <string name="fail_to_install_preconfigured_pack">فشل في تثبيت حزمة مكونة مسبقاً!</string>
+    <string name="fail_to_install_preconfigured_pack_and_rollback">فشل في تثبيت الحزمة التي تم تكوينها مسبقا! رجوع إلى البيانات القديمة!</string>
+    <string name="fail_to_export_preconfigured_pack">فشل في تصدير الحزمة المعدة مسبقاً!</string>
+    <string name="choose_installation_type">اختر نوع التثبيت</string>
+    <string name="choose_installation_type_instruction">استخدم حزمة بيانات موجودة للاستيطان بسرعة، أو البدء من جديد بتثبيت جهاز جديد باستخدام ذاكرة القراءة فقط/والبرمجيات الثابتة الخاصة به.</string>
+    <string name="preconfigured_pack">حزمة معدة مسبقاً</string>
+    <string name="rom_or_firmware">الروم/البرنامج الثابت</string>
+    <string name="save_launch_file_success">تم حفظ ملف التشغيل باسم %s!</string>
+    <string name="install">تثبيت</string>
+    <string name="rescan_devices">فحص الأجهزة</string>
+    <string name="device_dump">Dump الجهاز</string>
+    <string name="rpkg" translatable="false">RPKG</string>
+    <string name="rom" translatable="false">ROM</string>
+    <string name="path_to_rpkg">المسار إلى RPKG</string>
+    <string name="path_to_rom">المسار إلى ROM</string>
+    <string name="firmware">البرنامج الثابت</string>
+    <string name="path_to_firmware">المسار إلى VPL</string>
+    <string name="install_method">طريقة التثبيت</string>
+    <string name="enter_new_name">أدخل اسم جديد</string>
+    <string name="mode">الوضع</string>
+    <string name="no_device_dialog_title">لا يوجد جهاز مثبت!</string>
+    <string name="no_device_installed">الرجاء تثبيت الجهاز. الملفات و ROM للجهاز الرمزي مطلوبة للتثبيت.\n\nملاحظة يحتاج كل تطبيق إلى جهاز سيمبي مناسب لتشغيله.</string>
+    <string name="install_device_note_may_need_rpkg">بالنسبة لأجهزة S60v2 أو أكثر، قد تحتاج إلى توفير ملف إضافي يسمى RPKG. اختيار المسار سيظهر عند اكتشاف المثبت الحاجة إليه.</string>
+    <string name="recommended_devices_to_install">نوصي بتثبيت الأجهزة</string>
+    <string name="wiki_info">لمزيد من المعلومات حول تثبيت الجهاز، يرجى التحقق من الويكي:</string>
+    <string name="wiki_link" translatable="false"> &lt;a href="https://eka2l1.miraheze.org/wiki/Official_Links"&gt;eka2l1.miraheze.org&lt;/a&gt;</string>
+    <string name="install_rpkg_corrupt">ملف RPKG المقدم تالف!</string>
+    <string name="install_rpkg_file_not_found">لا يمكن فتح ملف RPKG المحدد!</string>
+    <string name="install_raw_dump_fail_to_copy">فشل في نسخ ملفات raw dump إلى الوجهة المستهدفة!</string>
+    <string name="install_rom_fail_to_copy">فشل في نسخ ROM إلى الوجهة المستهدفة!</string>
+    <string name="install_rpkg_insufficent_size">ملف RPKG صغير جداً، قد لا يتم تنفيذ dump منها!</string>
+    <string name="install_already_exist">الجهاز المراد تثبيته موجود بالفعل!</string>
+    <string name="install_product_determine_fail">فشل في تحديد معلومات المنتج!</string>
+    <string name="install_device_vpl_invalid_msg">ملف وصف البرنامج الثابت (VPL) غير صالح!</string>
+    <string name="install_device_rofs_corrupt_msg">ملف ROFS معطوب!</string>
+    <string name="install_device_rom_corrupt_msg">ملف ROM تالف!</string>
+    <string name="install_device_fpsx_corrupt_msg">ملف FPSX تالف!</string>
+    <string name="pref_general_title">عام</string>
+    <string name="pref_system_title">النظام</string>
+    <string name="pref_android_title" translatable="false">Android</string>
+    <string name="pref_control_key_binding_sect_title">ربط المفاتيح</string>
+    <string name="pref_theme">الثيم</string>
+    <string name="pref_theme_light">فاتح</string>
+    <string name="pref_theme_dark">داكن</string>
+    <string name="pref_enable_virtual_keyboard">تمكين لوحة المفاتيح الظاهرية</string>
+    <string name="pref_enable_actionbar">تمكين شريط الإجراءات</string>
+    <string name="pref_enable_statusbar">تمكين شريط الحالة</string>
+    <string name="pref_wakelock">إبقاء الشاشة فعالة</string>
+    <string name="pref_enable_vibration">تمكين الإهتزاز</string>
+    <string name="pref_emulator_dir">مسار العمل</string>
+    <string name="pref_launch_file_dir">مجلد ملف التشغيل</string>
+    <string name="pref_emulator_dir_cant_change">لا يمكن تغيير مجلد العمل!</string>
+    <string name="pref_general_utilities_nearest_neighbor_filtering_msg">تفعيل تصفية أقرب جار</string>
+    <string name="pref_system_language_option_name">اللغة</string>
+    <string name="pref_system_real_time_accuracy_str">الدقة في الوقت الحقيقي</string>
+    <string name="pref_system_real_time_accuracy_level_name_low">منخفض</string>
+    <string name="pref_system_real_time_accuracy_level_name_mid">متوسط</string>
+    <string name="pref_system_real_time_accuracy_level_name_high">عالية</string>
+    <string name="pref_system_time_delay_option_name">تأخير الوقت</string>
+    <string name="pref_system_setting_inheritance_option_name">توريث الاعدادات</string>
+    <string name="pref_hal_imei_option_name" translatable="false">IMEI</string>
+    <string name="pref_mmc_id" translatable="false">MMC ID</string>
+    <string name="emulated_screen_rotation_item_name">التدوير</string>
+    <string name="emulated_screen_refresh_rate_item_name">معدل التحديث</string>
+    <string name="pref_device_display_name">اسم الهاتف</string>
+    <string name="hide_system_apps">إخفاء تطبيقات النظام</string>
+    <string name="pref_bt_netplay" translatable="false">Bluetooth Netplay</string>
+    <string name="pref_bt_netplay_direct_ips_manager">مدير IP المباشر</string>
+    <string name="enter_address">أدخل عنوان</string>
+    <string name="address">العنوان</string>
+    <string name="port">المنفذ</string>
+    <string name="pref_bt_netplay_mode_off">إيقاف</string>
+    <string name="pref_bt_netplay_mode_direct_ip">عنوان IP مباشر</string>
+    <string name="pref_bt_netplay_mode_lan">الشبكة المحلية</string>
+    <string name="pref_bt_netplay_mode_server">الخادم</string>
+    <string name="pref_bt_netplay_enable_upnp">تمكين UPnP (لتشغيل IPv4 العام)</string>
+    <string name="pref_bt_netplay_server_address">عنوان الخادم</string>
+    <string name="pref_bt_netplay_password">كلمة المرور</string>
+    <string name="pref_bt_netplay_port_offset">إزاحة المنفذ</string>
+    <string name="action_context_delete">حذف</string>
+    <string name="action_context_rename">إعادة التسمية</string>
+    <string name="action_context_shortcut">إنشاء إختصار</string>
+    <string name="action_context_launch_file">إنشاء ملف تشغيل</string>
+    <string name="start">إبدأ</string>
+    <string name="reset_settings">إعادة ضبط الإعدادات</string>
+    <string name="reset_layout">إعادة تعيين ترتيب لوحة المفاتيح</string>
+    <string name="load_profile">تحميل الملف الشخصي</string>
+    <string name="save_profile">حفظ الملف الشخصي</string>
+    <string name="pref_screen_options">خيارات الشاشة</string>
+    <string name="pref_scale_ratio">المقاس(٪)</string>
+    <string name="pref_background">الخلفية</string>
+    <string name="pref_background_image">صورة الخلفية</string>
+    <string name="pref_background_image_view">عرض</string>
+    <string name="pref_background_image_empty">لم يتم تعيينه</string>
+    <string name="pref_background_image_clear">مسح</string>
+    <string name="pref_background_image_fail_to_set">فشل في تعيين صورة الخلفية!</string>
+    <string name="background_image">صورة الخلفية</string>
+    <string name="background_image_opacity">شفافية صورة BG</string>
+    <string name="background_image_keep_aspect_ratio">الحفاظ على نسبة ابعاد الصورة BG</string>
+    <string name="pref_virtual_keyboard_options">لوحة المفاتيح الظاهرية</string>
+    <string name="pref_vk_show">أظهر لوحة المفاتيح</string>
+    <string name="pref_vk_feedback">ردود الفعل اللمسية</string>
+    <string name="pref_touch_input">المدخلات اللمسية</string>
+    <string name="pref_vk_back">الأزرار</string>
+    <string name="pref_vk_fore">التسميات</string>
+    <string name="pref_vk_outline">التخطيط</string>
+    <string name="pref_color_hint" translatable="false">RGB</string>
+    <string name="pref_vk_alpha">الشفافية: </string>
+    <string name="pref_vk_hide_delay">تاخير الاخفاء: </string>
+    <string name="pref_unit_ms">م. ث</string>
+    <string name="pref_vk_sel_fore">التسميات (P)</string>
+    <string name="pref_vk_sel_back">الأزرار(P)</string>
+    <string name="pref_sys_props">خصائص النظام</string>
+    <string name="pref_orientation">اتجاه الشاشة</string>
+    <string name="pref_orientation_default">الافتراضي</string>
+    <string name="pref_orientation_auto">تلقائي</string>
+    <string name="pref_orientation_port">عمودي</string>
+    <string name="pref_orientation_land">أفقي</string>
+    <string name="pref_vk_type">نوع لوحة المفاتيح</string>
+    <string name="pref_vk_type_custom">مخصص</string>
+    <string name="pref_vk_type_phone">الهاتف</string>
+    <string name="pref_vk_type_phone_arrows">الهاتف (الأسهم)</string>
+    <string name="pref_vk_hide_hint">معطل</string>
+    <string name="pref_button_shape_title">شكل الزر</string>
+    <string name="pref_button_shape_oval">شكل بيضاوي</string>
+    <string name="pref_button_shape_rect">مستطيل</string>
+    <string name="pref_button_shape_round">مستطيل دائري</string>
+    <string name="pref_input_devices_title">أجهزة الإدخال</string>
+    <string name="pref_screen_gravity">موقع على الشاشة</string>
+    <string name="pref_screen_gravity_bottom">الأسفل</string>
+    <string name="pref_screen_gravity_center">الوسط</string>
+    <string name="pref_screen_gravity_left">اليسار</string>
+    <string name="pref_screen_gravity_right">اليمين</string>
+    <string name="pref_screen_gravity_top">الأعلى</string>
+    <string name="pref_screen_scale_type">نوع المقياس</string>
+    <string name="pref_screen_scale_type_fill">ملء الشاشة (تجاهل نسبة الأبعاد)</string>
+    <string name="pref_screen_scale_type_fit">ملاءمة للشاشة (مع الحفاظ على نسبة الأبعاد)</string>
+    <string name="pref_screen_scale_type_fit_with_skin">ملاءمة للشاشة (مع واجهة N-Gage QD)</string>
+    <string name="pref_screen_scale_type_none">الدقة الأصلية</string>
+    <string name="pref_screen_use_notch">استخدام النتوء</string>
+    <string name="pref_screen_scale_use_shader">استخدام المظلل لتعزيز الجودة</string>
+    <string name="pref_screen_upscale_shader">ضل معزز الجودة</string>
+    <string name="pref_screen_default_shader">الافتراضي</string>
+    <string name="default_label">"%s (افتراضي)"</string>
+    <string name="not_saved_exists">موجود بالفعل</string>
+    <string name="error_name">أدخل الاسم!</string>
+    <string name="set_as_default">تعيين كإفتراضي</string>
+    <string name="edit">تعديل</string>
+    <string name="add">إضافة</string>
+    <string name="add_profile_description">إنشاء ملف شخصي</string>
+    <string name="enter_name">أدخل الاسم</string>
+    <string name="set_default_profile_description">تحديد هذا الملف الشخصي كإعدادات إفتراضية لجميع التطبيقات التي سيتم تثبيتها لاحقاً</string>
+    <string name="error_name_exists">هذا الاسم مستخدم، أدخل اسم آخر</string>
+    <string name="extensive_logging">تسجيل واسع النطاق</string>
+    <string name="virtual_key_left_soft" translatable="false">L</string>
+    <string name="virtual_key_right_soft" translatable="false">R</string>
+    <string name="virtual_key_d" translatable="false">D</string>
+    <string name="virtual_key_c" translatable="false">C</string>
+    <string name="virtual_key_left" translatable="false">←</string>
+    <string name="virtual_key_right" translatable="false">→</string>
+    <string name="virtual_key_up" translatable="false">↑</string>
+    <string name="virtual_key_down" translatable="false">↓</string>
+    <string name="virtual_key_f" translatable="false">F</string>
+    <string name="virtual_key_1" translatable="false">1</string>
+    <string name="virtual_key_2" translatable="false">2</string>
+    <string name="virtual_key_3" translatable="false">3</string>
+    <string name="virtual_key_4" translatable="false">4</string>
+    <string name="virtual_key_5" translatable="false">5</string>
+    <string name="virtual_key_6" translatable="false">6</string>
+    <string name="virtual_key_7" translatable="false">7</string>
+    <string name="virtual_key_8" translatable="false">8</string>
+    <string name="virtual_key_9" translatable="false">9</string>
+    <string name="virtual_key_0" translatable="false">0</string>
+    <string name="virtual_key_star" translatable="false">*</string>
+    <string name="virtual_key_pound" translatable="false">#</string>
+    <string name="mapping_dialog_title">اضغط على المفتاح</string>
+    <string name="mapping_dialog_message" formatted="false">التخطيط الحالي: %1$s</string>
+    <string name="reset_mapping">إعادة تعيين</string>
+    <string name="layout_edit_finished">تم الانتهاء من وضع التعديل</string>
+    <string name="layout_edit_finish">انهاء وضع التعديل</string>
+    <string name="layout_edit_mode">وضع تحرير تخطيط المفتاح</string>
+    <string name="layout_scale_mode">وضع تحرير حجم تخطيط الازرار</string>
+    <string name="layout_switch">تبديل تخطيط المفاتيح</string>
+    <string name="hide_buttons">إخفاء الأزرار</string>
+    <string name="confirmation_required">التأكيد مطلوب</string>
+    <string name="force_close_confirmation">فرض اغلاق التطبيق قد يؤدي لفقد بعض البيانات او تدميرها بالكامل!\nمتابعه؟</string>
+    <string name="log_saved">تم حفظ السجل</string>
+    <string name="enter_text">أدخل النص</string>
+    <string name="about_website" translatable="false">&lt;BR&gt;Website: &lt;a href="https://eka2l1.github.io"&gt;eka2l1.github.io&lt;/a&gt;</string>
+    <string name="about_github" translatable="false">&lt;BR&gt;GitHub: &lt;a href="https://github.com/EKA2L1/EKA2L1"&gt;github.com/EKA2L1/EKA2L1&lt;/a&gt;</string>
+    <string name="about_crowdin" translatable="false">&lt;BR&gt;Crowdin(translation): &lt;a href="https://crowdin.com/project/EKA2L1"&gt;crowdin.com/project/EKA2L1&lt;/a&gt;</string>
+    <string name="about_copyright" translatable="false">&lt;BR&gt;&lt;BR&gt;Copyright 2018-2024 EKA2L1 Team</string>
+    <string name="about_icon_author" translatable="false">dmolina007 &amp; Frenesi</string>
+    <string name="about_icon_by">&lt;BR&gt;الايقونة بواسطة: </string>
+    <string name="about_special_thanks_title">شكر خاص</string>
+    <string name="about_special_thanks_content">  - nikita36078 لنشر نسخة الأندرويد على متجر Play ولمساعدته!&lt;BR&gt;  - ماسحات السيمبيان/N-Gage OG : BinPDA, pSyGAGE, Engage, zg, eskMaemo, BodyZ, Ilya Dianov, iCodeRUS, huellif, … للمساهمات الرائعة!&lt;BR&gt;  - جهات تصنيع الهواتف لإنشاء أجهزة سيمبية رائعة: نوكيا، سوني إريكسون، سامسونغ، سيمنز. .&lt;BR&gt;  - مجتمع ديسكورد N-Gage&lt;BR&gt;  - vk.com/Symbian_zone مجتمع&lt;BR&gt;  - EKA2L1 مجتمع ديسكورد</string>
+    <string name="about_translator">المترجمون</string>
+    <string name="about_translator_content" translatable="false">- PhantomHorror (Українська, Беларуская, Русский)&lt;BR&gt;  - Federico Dispinzeri (ca0ss) (Italiano)&lt;BR&gt;  - Faalagorn (Polski)&lt;BR&gt;  - Nikita Shakarun (nikita36078) (Русский)&lt;BR&gt;  - Rex_sa (rex07) (العربية)&lt;BR&gt;  - Walisson Silva (w_alisson_gostoso) (português brasileiro)&lt;BR&gt;  - Allen Merlin (ShadowDumb) (简体中文)&lt;BR&gt;  - heydootdoot (Bahasa Indonesia)&lt;BR&gt;  - Ar1 (Ary404) (Bahasa Indonesia, 日本語)&lt;BR&gt;  - enriqueyair (FrenesiGG) (Español)&lt;BR&gt;  - නාමල් ජයසිංහ (nimnaya) (සිංහල)&lt;BR&gt;  - Patrick Mates (patmat99) (Deutsch, Français, Español)&lt;BR&gt;  - I HAVE GOT THE POWER (rimbado) (Azərbaycanca, Türkçe)&lt;BR&gt;  - Tauhid Alam Rifty (ChildishRifty7) (বাংলা)&lt;BR&gt;  - Div, mix (reymo.az) (Azərbaycanca, Türkçe)&lt;BR&gt;  - João (Sefhriloff) (Español, português brasileiro)&lt;BR&gt;  - Alexis Jhon Gaspar (Lucss21a) (Wikang Filipino, Bahasa Indonesia)&lt;BR&gt;  - Nokia64 (Español)&lt;BR&gt;  - Jaakko Saarikko (styxnix) (Suomi)&lt;BR&gt;  - Alonso Neto (AlonsoNeto) (português brasileiro)&lt;BR&gt;  - GiorgioHerbie (Italiano)&lt;BR&gt;  - Hafiz Mohamed (Apihplays) (Bahasa Melayu)&lt;BR&gt;  - ShahinF27 (Khan27) (Azərbaycanca)&lt;BR&gt;  - Alain Teulet (niala6433) (Français)&lt;BR&gt;  - Daichi (Daichix) (Français)&lt;BR&gt;  - Peter Tissen (Bigpet) (Deutsch)&lt;BR&gt;  - Reiju (Rejiu) (Polski, Română, Deutsch)&lt;BR&gt;  - Jeremy Belpois (JeremyBelpois) (Bahasa Indonesia)&lt;BR&gt;  - Steven Felix (stevenfelix505) (Bahasa Indonesia)&lt;BR&gt;  - OguzHans (symbianware) (Türkçe)&lt;BR&gt;  - mvenhaikal (Bahasa Indonesia)&lt;BR&gt;  - JCC (johncarreon2012) (简体中文)&lt;BR&gt;  - Huaji Nishikino (sky0hjh) (简体中文)&lt;BR&gt;  - Fire_Head (Українська)&lt;BR&gt;  - oqzhnyldz (Türkçe)&lt;BR&gt;  - sakirasci (Türkçe)&lt;BR&gt;  - zixing (zixing131) (简体中文)&lt;BR&gt;  - Aaron Feng (AaronFeng753) (简体中文)&lt;BR&gt;  - Никита Пикалов (keXa2008) (Русский)&lt;BR&gt;  - literalmente-game (português brasileiro)&lt;BR&gt;  - Osanosa (Українська)&lt;BR&gt;  - Arthur de Castro Silva (arthurion) (português brasileiro)&lt;BR&gt;  - Marco Steinhaeuser (kermie) (Deutsch)&lt;BR&gt;  - Trinh Manh Viet (manhviet) (Tiếng Việt)&lt;BR&gt;  - Foysal Bhuiyan (foysalbhuyian008) (简体中文)&lt;BR&gt;  - zesty (简体中文)&lt;BR&gt;  - sony_rich (sonyrich) (Tiếng Việt)&lt;BR&gt;  - artem78 (Русский)&lt;BR&gt;  - Văn Heo Quay Nguyễn (FDERROR) (Tiếng Việt)&lt;BR&gt;  - Cetaceaqua (简体中文)&lt;BR&gt;  - mp107 (Polski)&lt;BR&gt;  - Hiago Cardoso de Melo (bearusumyo) (português brasileiro)&lt;BR&gt;  - gwmgdemj (简体中文)&lt;BR&gt;  - Quakeman 0 (williampaiva021) (português brasileiro)&lt;BR&gt;  - Dede Kurniawan (CraX_Dev) (Bahasa Indonesia)&lt;BR&gt;  - NinPhi (Русский)&lt;BR&gt;  - Florin9doi (Română)&lt;BR&gt;  - artemka 333 (artemka333) (Беларуская)&lt;BR&gt;  - Korteks Korta (kortex.343434) (Türkçe)&lt;BR&gt;  - 123456sdfft (简体中文)&lt;BR&gt;  - crisanto valler (vallercrisanto) (Wikang Filipino)&lt;BR&gt;  - Saqala Bilaabayso (Saqala) (Polski)&lt;BR&gt;  - 115190 (Italiano)&lt;BR&gt;  - Олександр Лапин (maliar2014) (Русский)&lt;BR&gt;  - Huck Jones (huckleberrypie) (Wikang Filipino)&lt;BR&gt;  - Rachel Wang (rwang4064) (简体中文)&lt;BR&gt;  - Никита Шустол (QsFvn5bA4v) (Беларуская)&lt;BR&gt;  - Serkan Ağdeve (usta_serkan_06) (Türkçe)&lt;BR&gt;  - REMOVED_USER (Deutsch)&lt;BR&gt;  - Бато Батоболотов (Just_Bato) (Русский)&lt;BR&gt;  - හෙළබස සමූහය (HelaBasa) (සිංහල)&lt;BR&gt;  - Trần Nam Hải (E.GMR) (Tiếng Việt)&lt;BR&gt;  - GG Snake (dnfcf524) (简体中文)&lt;BR&gt;  - Khoirul Anam (Anam31) (Bahasa Indonesia)&lt;BR&gt;  - where where (wherewhere) (简体中文)&lt;BR&gt;  - XheroxJS (Español)&lt;BR&gt;  - Nicolas Augustin (nicolasaugustin.atlantis) (Français)&lt;BR&gt;  - Juan Ortiz (Kloido) (Español)&lt;BR&gt;  - mauricio toxqui citalan (mauriciotoxquicitalan) (Español)&lt;BR&gt;  - Sen Esguerra (videogameboy0783) (Wikang Filipino)&lt;BR&gt;  - Shahril Shahril (shahrilshahril609) (Bahasa Indonesia)&lt;BR&gt;  - Serkan Agdeve (serkanagdeve10) (Türkçe)&lt;BR&gt;  - Raziel Benjamin Zapata (razielben1504) (Español)&lt;BR&gt;  - Indra Saragosa (indrasaragosa946) (Bahasa Indonesia)&lt;BR&gt;  - My Talking Tom 2 Smash Hit Mod [No Pay 2 Win] (ctnhanhuy) (Tiếng Việt)&lt;BR&gt;  - CIssnei - (cissnei112) (简体中文)&lt;BR&gt;  - леонид поляков (leon412) (Русский)&lt;BR&gt;  - Johny19 Jonius19 (joniusjohny18) (Bahasa Melayu)&lt;BR&gt;  - 孙福玥 (sun2839266) (简体中文)&lt;BR&gt;  - Rumia (bagregsidoel) (Bahasa Indonesia)&lt;BR&gt;  - igor macedo (igor3891344467) (português brasileiro)&lt;BR&gt;  - Trong Thu Do (fewdspuckrito) (Tiếng Việt)&lt;BR&gt;</string>
+    <string name="version">الإصدار: </string>
+    <string name="recommended_devices_note">ملاحظة: ينصح باستخدام البرامج الثابتة لتثبيت الأجهزة من S60v3 وما فوق.</string>
+    <string name="recommended_devices_s60v1" translatable="false">S60v1: N-Gage</string>
+    <string name="recommended_devices_s60v2" translatable="false">S60v2: Nokia N70</string>
+    <string name="recommended_devices_s60v3" translatable="false">S60v3: Nokia 5320 XpressMusic, Nokia E5</string>
+    <string name="recommended_devices_s60v5" translatable="false">S60v5: Nokia 5800 XpressMusic, Nokia 5230</string>
+    <string name="recommended_devices_s3_belle" translatable="false">S^3, Belle: Nokia C7-00, Nokia X7-00</string>
+    <string name="install_ng_game_cant_find_data_folder">لا يمكن العثور على مجلد بيانات اللعبة!</string>
+    <string name="install_ng_game_more_than_one_game">هناك أكثر من لعبة واحدة في مجلد اللعبة المعين!</string>
+    <string name="install_ng_game_no_game_info_file">ملف معلومات اللعبة غير موجود في مجلد اللعبة!</string>
+    <string name="install_ng_game_corrupted_game_info">ملف معلومات اللعبة تالف. الرجاء التحقق من صحة بياناتك!</string>
+    <string name="select_app_list_mode">Choose view</string>
+    <string name="list_app_list_mode_2">2-column list</string>
+    <string name="list_app_list_mode_3">3-column list</string>
+    <string name="devices_management_menu">System management</string>
+    <string name="end_devices_menu">End device</string>
+    <string name="system_menu_title">System</string>
+    <string name="profiles_menu_title">Profiles</string>
+    <string name="install_preconfigured_pack_menu">Install preconfigured pack</string>
+    <string name="export_preconfigured_pack_menu">تصدير البيانات الحالية</string>
+    <string name="export_preconfigured_pack_success">تم تصدير الحزمة المعدة مسبقاً: %1$s</string>
+    <string name="install_ng_game_menu">Install N-Gage Game</string>
+    <string name="mount_sd_menu">Mount N-Gage MMC/SD</string>
+    <string name="save_log_menu">Save log</string>
+    <string name="rename_app_reset_hint">Leave empty to restore the original name</string>
+
+
+    <!-- EKA2L1 DualStick 0.1.5: app delete/export/import -->
+    <string name="delete_app_title">حذف التطبيق</string>
+    <string name="delete_app_message">هل تريد حذف “%1$s”؟ ستتم إزالة التطبيق وبياناته المحفوظة.</string>
+    <string name="delete_app_completed">تم حذف التطبيق.</string>
+    <string name="delete_app_failed">تعذر حذف التطبيق.</string>
+    <string name="action_context_export">تصدير</string>
+    <string name="export_app_completed">تم تصدير التطبيق: %1$s</string>
+    <string name="export_app_failed">تعذر تصدير التطبيق.</string>
+    <string name="export_app_processing">جارٍ تصدير التطبيق والبيانات المحفوظة…</string>
+    <string name="import_app_action">استيراد</string>
+    <string name="import_app_checking">جارٍ التحقق من نسخة التطبيق الاحتياطية…</string>
+    <string name="import_app_completed">تم استيراد التطبيق: %1$s</string>
+    <string name="import_app_failed">تعذر استيراد التطبيق. تمت استعادة البيانات الموجودة.</string>
+    <string name="import_app_invalid">الملف المحدد ليس نسخة احتياطية صالحة لتطبيق EKA2L1.</string>
+    <string name="import_app_menu">استيراد نسخة احتياطية لتطبيق/لعبة</string>
+    <string name="import_app_message">هل تريد استيراد %1$s ‏(UID ‏%2$s) مع البيانات المحفوظة؟\n\n%3$d ملفات، %4$s\nسيتم استبدال الملفات الموجودة لهذا التطبيق.</string>
+    <string name="import_app_processing">جارٍ استيراد التطبيق والبيانات المحفوظة…</string>
+    <string name="import_app_title">استيراد تطبيق</string>
+</resources>

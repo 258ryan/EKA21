@@ -1,0 +1,1705 @@
+/*
+ * Copyright (c) 2019 EKA2L1 Team.
+ *
+ * This file is part of EKA2L1 project
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <android/bitmap.h>
+#include <android/launcher.h>
+#include <android/state.h>
+
+#include <package/manager.h>
+#include <system/devices.h>
+
+#include <common/fileutils.h>
+#include <common/algorithm.h>
+#include <common/android/jniutils.h>
+#include <common/language.h>
+#include <common/path.h>
+#include <common/pystr.h>
+#include <loader/mif.h>
+#include <loader/svgb.h>
+#include <loader/nvg.h>
+#include <services/fbs/fbs.h>
+#include <system/installation/firmware.h>
+#include <system/installation/rpkg.h>
+#include <utils/locale.h>
+#include <utils/system.h>
+
+#include <lunasvg.h>
+#include <jni.h>
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cstdio>
+#include <filesystem>
+#include <system_error>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb/stb_image_write.h>
+
+namespace eka2l1::android {
+    static constexpr std::uint32_t SCREEN_SCALE_TYPE_NONE = 0;
+    static constexpr std::uint32_t SCREEN_SCALE_TYPE_FIT = 1;
+    static constexpr std::uint32_t SCREEN_SCALE_TYPE_FILL = 2;
+    static constexpr std::uint32_t SCREEN_SCALE_TYPE_FIT_WITH_SKIN = 3;
+
+    static constexpr float SKIN_SCREEN_LEFT_NORM = 538.0f / 2048.0f;
+    static constexpr float SKIN_SCREEN_TOP_NORM = 7.0f / 1152.0f;
+    static constexpr float SKIN_SCREEN_WIDTH_NORM = 971.0f / 2048.0f;
+    static constexpr float SKIN_SCREEN_HEIGHT_NORM = 1133.0f / 1152.0f;
+
+    static eka2l1::rect calculate_background_draw_rect(const eka2l1::vec2 &swapchain_size,
+                                                       const int background_width,
+                                                       const int background_height,
+                                                       const bool keep_aspect) {
+        eka2l1::rect draw_image_rect;
+        draw_image_rect.size = swapchain_size;
+
+        if (!keep_aspect || background_width <= 0 || background_height <= 0) {
+            return draw_image_rect;
+        }
+
+        const float bg_aspect_ratio = static_cast<float>(background_width) / static_cast<float>(background_height);
+        bool fit_width = false;
+
+        if (swapchain_size.x > swapchain_size.y) {
+            fit_width = (swapchain_size.y * bg_aspect_ratio <= draw_image_rect.size.x);
+        } else {
+            fit_width = (swapchain_size.x / bg_aspect_ratio > draw_image_rect.size.y);
+        }
+
+        if (fit_width) {
+            draw_image_rect.size.x = swapchain_size.x;
+            draw_image_rect.size.y = static_cast<int>(swapchain_size.x / bg_aspect_ratio);
+            draw_image_rect.top.y = (swapchain_size.y - draw_image_rect.size.y) / 2;
+        } else {
+            draw_image_rect.size.y = swapchain_size.y;
+            draw_image_rect.size.x = static_cast<int>(swapchain_size.y * bg_aspect_ratio);
+            draw_image_rect.top.x = (swapchain_size.x - draw_image_rect.size.x) / 2;
+        }
+
+        return draw_image_rect;
+    }
+
+    // The game screen sits inside the skin, so unlike a background the skin has to stay fully visible.
+    // Fit it inside the surface, leaving bars at the sides or at the top and bottom, instead of covering it.
+    static eka2l1::rect calculate_skin_draw_rect(const eka2l1::vec2 &swapchain_size,
+                                                 const int skin_width,
+                                                 const int skin_height) {
+        eka2l1::rect draw_skin_rect;
+        draw_skin_rect.size = swapchain_size;
+
+        if (skin_width <= 0 || skin_height <= 0 || swapchain_size.x <= 0 || swapchain_size.y <= 0) {
+            return draw_skin_rect;
+        }
+
+        const float skin_aspect_ratio = static_cast<float>(skin_width) / static_cast<float>(skin_height);
+        const float swapchain_aspect_ratio = static_cast<float>(swapchain_size.x) / static_cast<float>(swapchain_size.y);
+
+        if (swapchain_aspect_ratio > skin_aspect_ratio) {
+            draw_skin_rect.size.y = swapchain_size.y;
+            draw_skin_rect.size.x = static_cast<int>(swapchain_size.y * skin_aspect_ratio);
+            draw_skin_rect.top.x = (swapchain_size.x - draw_skin_rect.size.x) / 2;
+        } else {
+            draw_skin_rect.size.x = swapchain_size.x;
+            draw_skin_rect.size.y = static_cast<int>(swapchain_size.x / skin_aspect_ratio);
+            draw_skin_rect.top.y = (swapchain_size.y - draw_skin_rect.size.y) / 2;
+        }
+
+        return draw_skin_rect;
+    }
+
+    launcher::launcher(eka2l1::system *sys)
+        : sys(sys)
+        , conf(sys->get_config())
+        , kern(sys->get_kernel_system())
+        , alserv(nullptr)
+        , input_complete_callback_(nullptr)
+        , yes_no_complete_callback_(nullptr)
+        , is_s80(false)
+        , background_img_(0)
+        , background_img_opacity_(0.0f)
+        , keep_bg_aspect_(true) {
+        retrieve_servers();
+    }
+
+    void launcher::retrieve_servers() {
+        if (kern) {
+            alserv = reinterpret_cast<eka2l1::applist_server *>(kern->get_by_name<service::server>(get_app_list_server_name_by_epocver(
+                    kern->get_epoc_version())));
+            winserv = reinterpret_cast<eka2l1::window_server *>(kern->get_by_name<service::server>(get_winserv_name_by_epocver(
+                    kern->get_epoc_version())));
+            fbsserv = reinterpret_cast<eka2l1::fbs_server *>(kern->get_by_name<service::server>(epoc::get_fbs_server_name_by_epocver(
+                    kern->get_epoc_version())));
+            rightsserv = reinterpret_cast<eka2l1::rights_server *>(kern->get_by_name<service::server>(eka2l1::RIGHTS_SERVER_NAME));
+        }
+    }
+
+    static constexpr std::uint32_t WARE_APP_UID_START = 0x10300000;
+    static inline bool is_reg_entry_probably_system_app(const apa_app_registry &reg) {
+        return ((reg.land_drive == drive_z) && (reg.mandatory_info.uid < WARE_APP_UID_START));
+    }
+
+    std::vector<std::string> launcher::get_apps() {
+        std::vector<apa_app_registry> &registerations = alserv->get_registerations();
+        std::vector<std::string> info;
+        for (auto &reg : registerations) {
+            if (!reg.caps.is_hidden) {
+                if (!conf || (conf && (!conf->hide_system_apps || (conf->hide_system_apps && !is_reg_entry_probably_system_app(reg))))) {
+                    std::string name = common::ucs2_to_utf8(reg.mandatory_info.long_caption.to_std_string(nullptr));
+                    std::string uid = std::to_string(reg.mandatory_info.uid);
+                    info.push_back(uid);
+                    info.push_back(name);
+                }
+            }
+        }
+        return info;
+    }
+
+    static jobject make_new_bitmap(JNIEnv *env, std::uint32_t width, std::uint32_t height) {
+        jclass bitmapCls = env->FindClass("android/graphics/Bitmap");
+        jmethodID createBitmapFunction = env->GetStaticMethodID(bitmapCls,
+            "createBitmap", "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
+        jstring configName = env->NewStringUTF("ARGB_8888");
+        jclass bitmapConfigClass = env->FindClass("android/graphics/Bitmap$Config");
+        jmethodID valueOfBitmapConfigFunction = env->GetStaticMethodID(
+            bitmapConfigClass, "valueOf", "(Ljava/lang/String;)Landroid/graphics/Bitmap$Config;");
+
+        jobject bitmapConfig = env->CallStaticObjectMethod(bitmapConfigClass, valueOfBitmapConfigFunction,
+            configName);
+
+        jobject newBitmap = env->CallStaticObjectMethod(bitmapCls, createBitmapFunction, width,
+            height, bitmapConfig);
+
+        return newBitmap;
+    }
+
+    jobjectArray launcher::get_app_icon(JNIEnv *env, std::uint32_t uid) {
+        apa_app_registry *reg = alserv->get_registration(uid);
+        if (!reg) {
+            return nullptr;
+        }
+
+        jobjectArray jicons = env->NewObjectArray(2,
+            env->FindClass("android/graphics/Bitmap"),
+            nullptr);
+
+        std::string app_name = common::ucs2_to_utf8(reg->mandatory_info.long_caption.to_std_string(nullptr));
+        io_system *io = sys->get_io_system();
+
+        const std::u16string path_ext = eka2l1::common::lowercase_ucs2_string(eka2l1::path_extension(reg->icon_file_path));
+
+        if (path_ext == u".mif") {
+            eka2l1::symfile file_route = io->open_file(reg->icon_file_path, READ_MODE | BIN_MODE);
+            eka2l1::common::create_directories("cache");
+
+            if (file_route) {
+                const std::uint64_t mif_last_modified = file_route->last_modify_since_0ad();
+                const std::string cached_path = fmt::format("cache/debinarized_{}.svg",
+                    common::pystr(app_name).strip_reserverd().strip().std_str());
+
+                std::unique_ptr<lunasvg::Document> document;
+
+                if (eka2l1::common::exists(cached_path)) {
+                    if (eka2l1::common::get_last_modifiy_since_ad(eka2l1::common::utf8_to_ucs2(cached_path)) >= mif_last_modified) {
+                        document = lunasvg::Document::loadFromFile(cached_path.c_str());
+                    }
+                }
+                
+                eka2l1::ro_file_stream file_route_stream(file_route.get());
+                eka2l1::loader::mif_file file_mif_parser(reinterpret_cast<eka2l1::common::ro_stream *>(&file_route_stream));
+
+                if (!document && file_mif_parser.do_parse()) {
+                    std::vector<std::uint8_t> data;
+                    int dest_size = 0;
+                    if (file_mif_parser.read_mif_entry(0, nullptr, dest_size)) {
+                        if (dest_size != 0) {
+                            data.resize(dest_size);
+                            file_mif_parser.read_mif_entry(0, data.data(), dest_size);
+
+                            eka2l1::common::ro_buf_stream inside_stream(data.data(), data.size());
+                            std::unique_ptr<eka2l1::common::wo_std_file_stream> outfile_stream =
+                                    std::make_unique<eka2l1::common::wo_std_file_stream>(cached_path, true);
+
+                            eka2l1::loader::mif_icon_header header;
+                            inside_stream.read(&header, sizeof(eka2l1::loader::mif_icon_header));
+
+                            std::vector<eka2l1::loader::svgb_convert_error_description> errors;
+                            std::vector<eka2l1::loader::nvg_convert_error_description> errors_nvg;
+
+                            if (header.type == eka2l1::loader::mif_icon_type_svg) {
+                                if (!eka2l1::loader::convert_svgb_to_svg(inside_stream, *outfile_stream, errors)) {
+                                    if (errors[0].reason_ == eka2l1::loader::svgb_convert_error_invalid_file) {
+                                        outfile_stream->write(reinterpret_cast<const char *>(data.data()) + sizeof(eka2l1::loader::mif_icon_header), data.size() - sizeof(eka2l1::loader::mif_icon_header));
+                                    }
+                                }
+
+                                outfile_stream.reset();
+                                document = lunasvg::Document::loadFromFile(cached_path.c_str());
+                            } else {
+                                inside_stream = eka2l1::common::ro_buf_stream(data.data() + sizeof(eka2l1::loader::mif_icon_header),
+                                                                              data.size() - sizeof(eka2l1::loader::mif_icon_header));
+
+                                if (eka2l1::loader::convert_nvg_to_svg(inside_stream, *outfile_stream, errors_nvg)) {
+                                    outfile_stream.reset();
+                                    document = lunasvg::Document::loadFromFile(cached_path.c_str());
+                                } else  {
+                                    LOG_ERROR(eka2l1::FRONTEND_UI, "Icon for app {} can't be decoded!", header.type, app_name);
+                                    outfile_stream.reset();
+
+                                    eka2l1::common::remove(cached_path);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (document) {
+                    std::uint32_t width = document->width();
+                    std::uint32_t height = document->height();
+                    jobject source_bitmap = make_new_bitmap(env, width, height);
+                    void *data_to_write = nullptr;
+                    int result = AndroidBitmap_lockPixels(env, source_bitmap, &data_to_write);
+                    if (result < 0) {
+                        env->DeleteLocalRef(source_bitmap);
+                        env->DeleteLocalRef(jicons);
+                        return nullptr;
+                    }
+
+                    auto bitmap = lunasvg::Bitmap(reinterpret_cast<std::uint8_t *>(data_to_write),
+                                                  width, height, width * 4);
+                    lunasvg::Matrix matrix{ 1, 0, 0, 1, 0, 0 };
+                    document->render(bitmap, matrix);
+                    bitmap.convertToRGBA();
+
+                    AndroidBitmap_unlockPixels(env, source_bitmap);
+
+                    env->SetObjectArrayElement(jicons, 0, source_bitmap);
+                    return jicons;
+                }
+            }
+        } else if (path_ext == u".mbm") {
+            eka2l1::symfile file_route = io->open_file(reg->icon_file_path, READ_MODE | BIN_MODE);
+            if (file_route) {
+                eka2l1::ro_file_stream file_route_stream(file_route.get());
+                eka2l1::loader::mbm_file file_mbm_parser(reinterpret_cast<eka2l1::common::ro_stream *>(&file_route_stream));
+
+                if (file_mbm_parser.do_read_headers() && !file_mbm_parser.sbm_headers.empty()) {
+                    eka2l1::loader::sbm_header *icon_header = &file_mbm_parser.sbm_headers[0];
+
+                    jobject source_bitmap = make_new_bitmap(env, icon_header->size_pixels.x,
+                        icon_header->size_pixels.y);
+                    void *data_to_write = nullptr;
+                    int result = AndroidBitmap_lockPixels(env, source_bitmap, &data_to_write);
+                    if (result < 0) {
+                        env->DeleteLocalRef(source_bitmap);
+                        env->DeleteLocalRef(jicons);
+                        return nullptr;
+                    }
+
+                    eka2l1::common::wo_buf_stream converted_write_stream(reinterpret_cast<std::uint8_t *>(data_to_write),
+                        icon_header->size_pixels.x * icon_header->size_pixels.y * 4);
+
+                    if (!eka2l1::epoc::convert_to_rgba8888(fbsserv, file_mbm_parser, 0, converted_write_stream)) {
+                        env->DeleteLocalRef(source_bitmap);
+                    } else {
+                        AndroidBitmap_unlockPixels(env, source_bitmap);
+
+                        env->SetObjectArrayElement(jicons, 0, source_bitmap);
+                        return jicons;
+                    }
+                }
+            }
+        } else {
+            std::optional<eka2l1::apa_app_masked_icon_bitmap> icon_pair = alserv->get_icon(*reg, 0);
+
+            if (icon_pair.has_value()) {
+                eka2l1::epoc::bitwise_bitmap *main_bitmap = icon_pair->first;
+                jobject source_bitmap = make_new_bitmap(env, main_bitmap->header_.size_pixels.x,
+                    main_bitmap->header_.size_pixels.y);
+                void *data_to_write = nullptr;
+                int result = AndroidBitmap_lockPixels(env, source_bitmap, &data_to_write);
+                if (result < 0) {
+                    env->DeleteLocalRef(source_bitmap);
+                    env->DeleteLocalRef(jicons);
+                    return nullptr;
+                }
+
+                eka2l1::common::wo_buf_stream main_bitmap_buf(reinterpret_cast<std::uint8_t *>(data_to_write),
+                    main_bitmap->header_.size_pixels.x * main_bitmap->header_.size_pixels.y * 4);
+
+                if (!eka2l1::epoc::convert_to_rgba8888(fbsserv, main_bitmap, main_bitmap_buf)) {
+                    LOG_ERROR(eka2l1::FRONTEND_UI, "Unable to load main icon of app {}", app_name);
+                    env->DeleteLocalRef(source_bitmap);
+                } else {
+                    AndroidBitmap_unlockPixels(env, source_bitmap);
+                    env->SetObjectArrayElement(jicons, 0, source_bitmap);
+                    if (icon_pair->second) {
+                        eka2l1::epoc::bitwise_bitmap *second_bitmap = icon_pair->second;
+
+                        jobject mask_bitmap = make_new_bitmap(env, main_bitmap->header_.size_pixels.x,
+                            main_bitmap->header_.size_pixels.y);
+                        result = AndroidBitmap_lockPixels(env, mask_bitmap, &data_to_write);
+                        if (result < 0) {
+                            env->DeleteLocalRef(mask_bitmap);
+                            return jicons;
+                        }
+
+                        eka2l1::common::wo_buf_stream second_bitmap_buf(reinterpret_cast<std::uint8_t *>(data_to_write),
+                            second_bitmap->header_.size_pixels.x * second_bitmap->header_.size_pixels.y * 4);
+
+                        if (!eka2l1::epoc::convert_to_rgba8888(fbsserv, second_bitmap, second_bitmap_buf, true)) {
+                            LOG_ERROR(eka2l1::FRONTEND_UI, "Unable to load mask bitmap icon of app {}", app_name);
+                            env->DeleteLocalRef(mask_bitmap);
+                        } else {
+                            AndroidBitmap_unlockPixels(env, mask_bitmap);
+                            env->SetObjectArrayElement(jicons, 1, mask_bitmap);
+                        }
+                    }
+                    return jicons;
+                }
+            }
+        }
+        env->DeleteLocalRef(jicons);
+        return nullptr;
+    }
+
+    void launcher::launch_app(std::uint32_t uid) {
+        apa_app_registry *reg = alserv->get_registration(uid);
+
+        epoc::apa::command_line cmdline;
+        cmdline.launch_cmd_ = epoc::apa::command_create;
+
+        kern->lock();
+        alserv->launch_app(*reg, cmdline, nullptr, [&](kernel::process *pr) {
+            JNIEnv *env = common::jni::environment();
+            jclass clazz = common::jni::find_class("com/github/eka2l1/emu/Emulator");
+            jmethodID exit_method = env->GetStaticMethodID(clazz, "exitInstance", "()V");
+
+            env->CallStaticVoidMethod(clazz, exit_method);
+        });
+
+        kern->unlock();
+    }
+
+    package::installation_result launcher::install_app(std::string &path) {
+        std::u16string upath = common::utf8_to_ucs2(path);
+        drive_number install_drive = drive_number::drive_e;
+
+        if (sys->is_s80_device_active()) {
+            install_drive = drive_number::drive_d;
+        }
+
+        return static_cast<package::installation_result>(sys->install_package(upath, install_drive));
+    }
+
+    std::vector<std::string> launcher::get_devices() {
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+        std::vector<std::string> info;
+        for (auto &device : dvcs) {
+            std::string name = device.model;
+            info.push_back(name);
+        }
+        return info;
+    }
+
+    std::vector<std::string> launcher::get_device_firwmare_codes() {
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+        std::vector<std::string> info;
+        for (auto &device : dvcs) {
+            std::string name = device.firmware_code;
+            info.push_back(name);
+        }
+        return info;
+    }
+
+    void launcher::set_language_to_property(const language new_one) {
+        property_ptr lang_prop = kern->get_prop(epoc::SYS_CATEGORY, epoc::LOCALE_LANG_KEY);
+        auto current_lang = lang_prop->get_pkg<epoc::locale_language>();
+
+        if (!current_lang) {
+            return;
+        }
+
+        current_lang->language = static_cast<epoc::language>(new_one);
+        lang_prop->set<epoc::locale_language>(current_lang.value());
+    }
+
+    void launcher::set_language_current(const language lang) {
+        conf->language = static_cast<int>(lang);
+        sys->set_system_language(lang);
+        set_language_to_property(lang);
+    }
+
+    void launcher::set_current_device(std::uint32_t id, const bool temporary) {
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+
+        if (conf->device != id) {
+            // Check if the language currently in config exists in the new device
+            if (std::find(dvcs[id].languages.begin(), dvcs[id].languages.end(), conf->language) == dvcs[id].languages.end()) {
+                set_language_current(static_cast<language>(dvcs[id].default_language_code));
+            }
+
+            if (temporary) {
+                sys->set_device(id);
+                retrieve_servers();
+            } else {
+                // Permanent set in Android backend will reset the native side
+                conf->device = id;
+                conf->serialize();
+
+                device_manager *dvcmngr = sys->get_device_manager();
+                if (dvcmngr) {
+                    dvcmngr->set_current(id);
+                }
+            }
+        }
+
+    }
+
+    void launcher::set_device_name(std::uint32_t id, const char *name) {
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+
+        if (id < dvcs.size()) {
+            dvcs[id].model = name;
+            dvc_mngr->save_devices();
+        }
+    }
+
+    bool launcher::delete_device(std::uint32_t id) {
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+
+        if (id >= dvcs.size()) {
+            return false;
+        }
+
+        const std::string firmware_code = dvcs[id].firmware_code;
+        const std::string firmware_code_lower = common::lowercase_string(firmware_code);
+
+        common::delete_folder(add_path(conf->storage, add_path("roms", firmware_code + "\\")));
+        if (firmware_code_lower != firmware_code) {
+            common::delete_folder(add_path(conf->storage, add_path("roms", firmware_code_lower + "\\")));
+        }
+
+        common::delete_folder(add_path(conf->storage, add_path("drives/z", firmware_code + "\\")));
+        if (firmware_code_lower != firmware_code) {
+            common::delete_folder(add_path(conf->storage, add_path("drives/z", firmware_code_lower + "\\")));
+        }
+
+        const bool deleted = dvc_mngr->delete_device(firmware_code);
+        if (!deleted) {
+            return false;
+        }
+
+        const std::size_t remaining = dvc_mngr->total();
+        if (remaining == 0) {
+            conf->device = 0;
+        } else if (conf->device >= remaining) {
+            conf->device = static_cast<std::uint32_t>(remaining - 1);
+        } else if ((id <= conf->device) && (conf->device > 0)) {
+            conf->device--;
+        }
+
+        dvc_mngr->set_current(static_cast<std::uint8_t>(conf->device));
+        conf->serialize(false);
+        return true;
+    }
+
+    void launcher::rescan_devices() {
+        sys->rescan_devices(drive_z);
+    }
+
+    std::uint32_t launcher::get_current_device() {
+        return conf->device;
+    }
+
+    bool launcher::does_rom_need_rpkg(const std::string &rom_path) {
+        return loader::should_install_requires_additional_rpkg(rom_path);
+    }
+
+    device_installation_error launcher::install_device(std::string &rpkg_path, std::string &rom_path, bool install_rpkg) {
+        std::string firmware_code;
+        device_manager *dvc_mngr = sys->get_device_manager();
+        device_installation_error result;
+
+        std::string root_c_path = add_path(conf->storage, "drives/c/");
+        std::string root_e_path = add_path(conf->storage, "drives/e/");
+        std::string root_z_path = add_path(conf->storage, "drives/z/");
+        std::string rom_resident_path = add_path(conf->storage, "roms/");
+
+        eka2l1::common::create_directories(rom_resident_path);
+
+        bool need_add_rpkg = false;
+
+        if (install_rpkg) {
+            if (eka2l1::loader::should_install_requires_additional_rpkg(rom_path)) {
+                result = eka2l1::loader::install_rpkg(dvc_mngr, rpkg_path, root_z_path, firmware_code, nullptr, nullptr);
+                need_add_rpkg = true;
+            } else {
+                result = eka2l1::loader::install_rom(dvc_mngr, rom_path, rom_resident_path, root_z_path, nullptr, nullptr);
+            }
+        } else {
+            result = eka2l1::install_firmware(
+                dvc_mngr, rom_path, root_c_path, root_e_path, root_z_path, rom_resident_path,
+                [](const std::vector<std::string> &variants) -> int { return 0; }, nullptr, nullptr);
+        }
+
+        if (result != device_installation_none) {
+            return result;
+        }
+
+        dvc_mngr->save_devices();
+
+        if (need_add_rpkg) {
+            const std::string rom_directory = add_path(conf->storage, add_path("roms", firmware_code + "\\"));
+
+            eka2l1::common::create_directories(rom_directory);
+            common::copy_file(rom_path, add_path(rom_directory, "SYM.ROM"), true);
+        }
+
+        return device_installation_none;
+    }
+
+    std::vector<std::string> launcher::get_packages() {
+        manager::packages *manager = sys->get_packages();
+        std::vector<std::string> info;
+        for (const auto &[pkg_uid, pkg] : *manager) {
+            if (!pkg.is_removable) {
+                continue;
+            }
+            std::string name = common::ucs2_to_utf8(pkg.package_name);
+            std::string uid = std::to_string(pkg.uid);
+            std::string index = std::to_string(pkg.index);
+            info.push_back(uid);
+            info.push_back(index);
+            info.push_back(name);
+        }
+        return info;
+    }
+
+    void launcher::uninstall_package(std::uint32_t uid, std::int32_t ext_index) {
+        manager::packages *manager = sys->get_packages();
+        package::object *obj = manager->package(uid, ext_index);
+
+        if (obj)
+            manager->uninstall_package(*obj);
+    }
+
+
+    static std::u16string normalize_app_package_path(std::u16string path, const drive_number app_drive) {
+        while (!path.empty() && path.back() == u'\0') {
+            path.pop_back();
+        }
+
+        std::replace(path.begin(), path.end(), u'/', u'\\');
+
+        if ((path.size() >= 2) && (path[0] == u'!') && (path[1] == u':')) {
+            path[0] = drive_to_char16(app_drive);
+        }
+
+        return common::lowercase_ucs2_string(path);
+    }
+
+    static std::u16string parent_directory_with_separator(const std::u16string &path) {
+        const std::size_t separator = path.find_last_of(u'\\');
+        if (separator == std::u16string::npos) {
+            return {};
+        }
+
+        return path.substr(0, separator + 1);
+    }
+
+    static bool paths_equal_ignoring_drive(const std::u16string &lhs,
+                                           const std::u16string &rhs) {
+        if (lhs == rhs) {
+            return true;
+        }
+
+        if ((lhs.size() >= 2) && (rhs.size() >= 2)
+                && (lhs[1] == u':') && (rhs[1] == u':')) {
+            return lhs.substr(2) == rhs.substr(2);
+        }
+
+        return false;
+    }
+
+    static bool path_is_inside_directory_ignoring_drive(const std::u16string &path,
+                                                        const std::u16string &directory) {
+        if (path.empty() || directory.empty()) {
+            return false;
+        }
+
+        if (path.rfind(directory, 0) == 0) {
+            return true;
+        }
+
+        if ((path.size() >= 2) && (directory.size() >= 2)
+                && (path[1] == u':') && (directory[1] == u':')) {
+            const std::u16string path_without_drive = path.substr(2);
+            const std::u16string directory_without_drive = directory.substr(2);
+            return path_without_drive.rfind(directory_without_drive, 0) == 0;
+        }
+
+        return false;
+    }
+
+    static bool is_safe_legacy_app_directory(const std::u16string &app_directory,
+                                             const drive_number app_drive);
+
+    static int package_match_score_for_app(const package::object &pkg,
+                                           const std::uint32_t app_uid,
+                                           const std::u16string &app_path,
+                                           const std::u16string &registry_path,
+                                           const std::u16string &localized_registry_path,
+                                           const std::u16string &icon_path,
+                                           const drive_number app_drive) {
+        int score = 0;
+        bool file_sid_matched = false;
+        bool app_directory_matched = false;
+
+        const std::u16string app_directory = parent_directory_with_separator(app_path);
+
+        // Newer apps live in \system\programs\ (\sys\bin\) or the drive root. Every package has
+        // files there, so the folder says nothing about ownership and must not be scored.
+        const bool has_private_app_directory = is_safe_legacy_app_directory(app_directory, app_drive);
+
+        if (std::find(pkg.sids.begin(), pkg.sids.end(), app_uid) != pkg.sids.end()) {
+            score += 800;
+        }
+
+        for (const package::file_description &description : pkg.file_descriptions) {
+            const std::u16string target = normalize_app_package_path(description.target, app_drive);
+
+            if (!file_sid_matched && (description.sid != 0) && (description.sid == app_uid)) {
+                score += 700;
+                file_sid_matched = true;
+            }
+
+            if (!app_path.empty() && paths_equal_ignoring_drive(target, app_path)) {
+                score += 1000;
+            }
+
+            if (!registry_path.empty() && paths_equal_ignoring_drive(target, registry_path)) {
+                score += 100;
+            }
+
+            if (!localized_registry_path.empty()
+                    && paths_equal_ignoring_drive(target, localized_registry_path)) {
+                score += 50;
+            }
+
+            if (!icon_path.empty() && paths_equal_ignoring_drive(target, icon_path)) {
+                score += 10;
+            }
+
+            // EKA1/SIS-v1 packages do not always expose the application's UID as package UID
+            // or file SID. The application's private folder under \system\apps\ is therefore
+            // the safest additional ownership signal. Only score it once per package.
+            if (has_private_app_directory && !app_directory_matched
+                    && path_is_inside_directory_ignoring_drive(target, app_directory)) {
+                score += 400;
+                app_directory_matched = true;
+            }
+        }
+
+        return score;
+    }
+
+    static void delete_known_app_registry_files(io_system *io,
+                                                const std::u16string &app_path,
+                                                const std::u16string &registry_path,
+                                                const std::u16string &localized_registry_path,
+                                                const std::u16string &icon_path) {
+        const std::u16string known_paths[] = {
+            app_path,
+            registry_path,
+            localized_registry_path,
+            icon_path
+        };
+
+        for (const std::u16string &path : known_paths) {
+            if (path.empty()) {
+                continue;
+            }
+
+            if (io->exist(path)) {
+                io->delete_entry(path);
+            }
+        }
+    }
+
+    static bool is_safe_legacy_app_directory(const std::u16string &app_directory,
+                                             const drive_number app_drive) {
+        if ((app_drive == drive_z) || (app_directory.size() < 18)) {
+            return false;
+        }
+
+        static const std::u16string expected_prefix = u":\\system\\apps\\";
+
+        if ((app_directory.size() < expected_prefix.size() + 2)
+                || (app_directory[1] != u':')
+                || (app_directory.substr(1, expected_prefix.size()) != expected_prefix)) {
+            return false;
+        }
+
+        const std::u16string app_folder_name =
+                app_directory.substr(expected_prefix.size() + 1);
+
+        if (app_folder_name.empty() || (app_folder_name.back() != u'\\')) {
+            return false;
+        }
+
+        const std::u16string folder_without_trailing_separator =
+                app_folder_name.substr(0, app_folder_name.size() - 1);
+
+        return !folder_without_trailing_separator.empty()
+                && (folder_without_trailing_separator.find(u'\\') == std::u16string::npos)
+                && (folder_without_trailing_separator != u".")
+                && (folder_without_trailing_separator != u"..");
+    }
+
+    static bool delete_legacy_app_directory(io_system *io,
+                                            const std::u16string &app_directory,
+                                            const drive_number app_drive) {
+        if (!is_safe_legacy_app_directory(app_directory, app_drive)) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "AppDelete refused unsafe legacy app directory {}",
+                      common::ucs2_to_utf8(app_directory));
+            return false;
+        }
+
+        const std::optional<std::u16string> raw_app_directory =
+                io->get_raw_path(app_directory);
+
+        if (!raw_app_directory.has_value()) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "AppDelete could not resolve raw path for {}",
+                      common::ucs2_to_utf8(app_directory));
+            return false;
+        }
+
+        common::delete_folder(common::ucs2_to_utf8(raw_app_directory.value()));
+
+        if (io->exist(app_directory)) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "AppDelete legacy app directory still exists after deletion: {}",
+                      common::ucs2_to_utf8(app_directory));
+            return false;
+        }
+
+        return true;
+    }
+
+    static void add_unique_export_uid(std::vector<std::uint32_t> &uids,
+                                      const std::uint32_t uid) {
+        if ((uid != 0) && (std::find(uids.begin(), uids.end(), uid) == uids.end())) {
+            uids.push_back(uid);
+        }
+    }
+
+    static std::u16string uid_as_hex_directory(const std::uint32_t uid) {
+        char uid_buffer[9] = {};
+        std::snprintf(uid_buffer, sizeof(uid_buffer), "%08x", uid);
+        return common::utf8_to_ucs2(uid_buffer);
+    }
+
+    static std::u16string app_directory_leaf(const std::u16string &app_directory) {
+        if (app_directory.empty()) {
+            return {};
+        }
+
+        std::u16string path = app_directory;
+        while (!path.empty() && (path.back() == u'\\')) {
+            path.pop_back();
+        }
+
+        const std::size_t separator = path.find_last_of(u'\\');
+        if (separator == std::u16string::npos) {
+            return path;
+        }
+
+        return path.substr(separator + 1);
+    }
+
+    static std::string lowercase_ascii(std::string value) {
+        std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char character) {
+            return static_cast<char>(std::tolower(character));
+        });
+        return value;
+    }
+
+    static bool filename_matches_export_token(const std::string &filename,
+                                              const std::string &token) {
+        if (token.size() < 4) {
+            return false;
+        }
+
+        if (filename == token) {
+            return true;
+        }
+
+        const std::string prefixes[] = {
+            token + ".",
+            token + "_",
+            token + "-"
+        };
+
+        for (const std::string &prefix : prefixes) {
+            if (filename.rfind(prefix, 0) == 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static void add_app_export_path(io_system *io,
+                                    const std::u16string &path,
+                                    const drive_number app_drive,
+                                    std::vector<std::u16string> &seen_virtual_paths,
+                                    std::vector<std::string> &result) {
+        std::u16string normalized_path = normalize_app_package_path(path, app_drive);
+        if ((normalized_path.size() < 3) || (normalized_path[1] != u':')
+                || (normalized_path[0] == u'z')) {
+            return;
+        }
+
+        if (!io->exist(normalized_path)) {
+            return;
+        }
+
+        if (std::find(seen_virtual_paths.begin(), seen_virtual_paths.end(), normalized_path)
+                != seen_virtual_paths.end()) {
+            return;
+        }
+
+        const std::optional<std::u16string> raw_path = io->get_raw_path(normalized_path);
+        if (!raw_path.has_value()) {
+            return;
+        }
+
+        seen_virtual_paths.push_back(normalized_path);
+        result.push_back(common::ucs2_to_utf8(normalized_path));
+        result.push_back(common::ucs2_to_utf8(raw_path.value()));
+    }
+
+    static void add_matching_export_children(io_system *io,
+                                             const std::u16string &virtual_directory,
+                                             const drive_number app_drive,
+                                             const std::vector<std::string> &tokens,
+                                             std::vector<std::u16string> &seen_virtual_paths,
+                                             std::vector<std::string> &result) {
+        if (!io->exist(virtual_directory)) {
+            return;
+        }
+
+        const std::optional<std::u16string> raw_directory = io->get_raw_path(virtual_directory);
+        if (!raw_directory.has_value()) {
+            return;
+        }
+
+        const std::string raw_directory_utf8 = common::ucs2_to_utf8(raw_directory.value());
+        std::error_code error;
+        const std::filesystem::path filesystem_directory = std::filesystem::u8path(raw_directory_utf8);
+
+        if (!std::filesystem::is_directory(filesystem_directory, error) || error) {
+            return;
+        }
+
+        for (const std::filesystem::directory_entry &entry
+                : std::filesystem::directory_iterator(filesystem_directory, error)) {
+            if (error) {
+                break;
+            }
+
+            const std::string filename = entry.path().filename().string();
+            const std::string normalized_filename = lowercase_ascii(filename);
+
+            bool matched = false;
+            for (const std::string &token : tokens) {
+                if (filename_matches_export_token(normalized_filename, token)) {
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched) {
+                continue;
+            }
+
+            std::u16string virtual_child = virtual_directory;
+            if (!virtual_child.empty() && (virtual_child.back() != u'\\')) {
+                virtual_child.push_back(u'\\');
+            }
+            virtual_child += common::utf8_to_ucs2(filename);
+
+            if (entry.is_directory(error) && !error) {
+                virtual_child.push_back(u'\\');
+            }
+            error.clear();
+
+            add_app_export_path(io, virtual_child, app_drive, seen_virtual_paths, result);
+        }
+    }
+
+    std::vector<std::string> launcher::get_app_export_paths(std::uint32_t app_uid) {
+        std::vector<std::string> result;
+        std::vector<std::u16string> seen_virtual_paths;
+
+        if (!alserv) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to export app 0x{:X}: app list service is unavailable", app_uid);
+            return result;
+        }
+
+        apa_app_registry *registration = alserv->get_registration(app_uid);
+        if (!registration) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to export app 0x{:X}: app registration was not found", app_uid);
+            return result;
+        }
+
+        io_system *io = sys->get_io_system();
+        if (!io) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to export app 0x{:X}: I/O system is unavailable", app_uid);
+            return result;
+        }
+
+        const drive_number app_drive = registration->land_drive;
+        const std::u16string app_path = normalize_app_package_path(
+            registration->mandatory_info.app_path.to_std_string(nullptr), app_drive);
+        const std::u16string registry_path = normalize_app_package_path(
+            registration->rsc_path, app_drive);
+        const std::u16string localized_registry_path = normalize_app_package_path(
+            registration->localised_info_rsc_path, app_drive);
+        const std::u16string icon_path = normalize_app_package_path(
+            registration->icon_file_path, app_drive);
+        const std::u16string app_directory = parent_directory_with_separator(app_path);
+
+        if ((app_path.size() < 3) || (app_path[1] != u':') || (app_path[0] == u'z')) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to export app 0x{:X}: unsupported app path {}",
+                      app_uid, common::ucs2_to_utf8(app_path));
+            return result;
+        }
+
+        const bool has_private_legacy_app_directory =
+            is_safe_legacy_app_directory(app_directory, app_drive);
+
+        if (has_private_legacy_app_directory) {
+            add_app_export_path(io, app_directory, app_drive, seen_virtual_paths, result);
+        }
+        add_app_export_path(io, app_path, app_drive, seen_virtual_paths, result);
+        add_app_export_path(io, registry_path, app_drive, seen_virtual_paths, result);
+        add_app_export_path(io, localized_registry_path, app_drive, seen_virtual_paths, result);
+        add_app_export_path(io, icon_path, app_drive, seen_virtual_paths, result);
+
+        const package::object *matched_package = nullptr;
+        int highest_score = 0;
+        int highest_score_matches = 0;
+
+        manager::packages *package_manager = sys->get_packages();
+        if (package_manager) {
+            for (const auto &package_entry : *package_manager) {
+                const package::object &pkg = package_entry.second;
+                if (!pkg.is_removable) {
+                    continue;
+                }
+
+                int score = package_match_score_for_app(pkg, app_uid, app_path, registry_path,
+                                                        localized_registry_path, icon_path, app_drive);
+                if ((score == 0) && (pkg.uid == app_uid)) {
+                    score = 1;
+                }
+
+                if (score > highest_score) {
+                    highest_score = score;
+                    highest_score_matches = 1;
+                    matched_package = &pkg;
+                } else if ((score > 0) && (score == highest_score)) {
+                    highest_score_matches++;
+                }
+            }
+        }
+
+        if (highest_score_matches != 1) {
+            matched_package = nullptr;
+        }
+
+        std::vector<std::uint32_t> related_uids;
+        add_unique_export_uid(related_uids, app_uid);
+
+        if (matched_package) {
+            add_unique_export_uid(related_uids, matched_package->uid);
+
+            for (const epoc::uid sid : matched_package->sids) {
+                add_unique_export_uid(related_uids, sid);
+            }
+
+            for (const package::file_description &description : matched_package->file_descriptions) {
+                add_unique_export_uid(related_uids, description.sid);
+                add_app_export_path(io, description.target, app_drive,
+                                    seen_virtual_paths, result);
+            }
+        }
+
+        std::u16string app_folder_name;
+        if (has_private_legacy_app_directory) {
+            app_folder_name = app_directory_leaf(app_directory);
+        } else {
+            std::u16string app_filename = app_path;
+            const std::size_t separator = app_filename.find_last_of(u'\\');
+            if (separator != std::u16string::npos) {
+                app_filename = app_filename.substr(separator + 1);
+            }
+            const std::size_t extension = app_filename.find_last_of(u'.');
+            app_folder_name = (extension == std::u16string::npos)
+                ? app_filename : app_filename.substr(0, extension);
+        }
+
+        std::vector<char16_t> export_drives = { u'c', u'd', u'e', drive_to_char16(app_drive) };
+        std::sort(export_drives.begin(), export_drives.end());
+        export_drives.erase(std::unique(export_drives.begin(), export_drives.end()),
+                            export_drives.end());
+
+        std::vector<std::string> save_name_tokens;
+        const std::string app_folder_token = lowercase_ascii(common::ucs2_to_utf8(app_folder_name));
+        if (app_folder_token.size() >= 4) {
+            save_name_tokens.push_back(app_folder_token);
+        }
+
+        for (const std::uint32_t related_uid : related_uids) {
+            const std::string uid_token = lowercase_ascii(
+                common::ucs2_to_utf8(uid_as_hex_directory(related_uid)));
+            if (std::find(save_name_tokens.begin(), save_name_tokens.end(), uid_token)
+                    == save_name_tokens.end()) {
+                save_name_tokens.push_back(uid_token);
+            }
+        }
+
+        for (const char16_t drive_character : export_drives) {
+            if ((drive_character == u'z') || (drive_character < u'a') || (drive_character > u'y')) {
+                continue;
+            }
+
+            if (has_private_legacy_app_directory) {
+                std::u16string mirrored_app_directory;
+                mirrored_app_directory.push_back(drive_character);
+                mirrored_app_directory += app_directory.substr(1);
+                add_app_export_path(io, mirrored_app_directory, app_drive,
+                                    seen_virtual_paths, result);
+            }
+
+            for (const std::uint32_t related_uid : related_uids) {
+                std::u16string private_directory;
+                private_directory.push_back(drive_character);
+                private_directory += u":\\private\\";
+                private_directory += uid_as_hex_directory(related_uid);
+                private_directory.push_back(u'\\');
+                add_app_export_path(io, private_directory, app_drive,
+                                    seen_virtual_paths, result);
+
+                std::u16string shared_data_file;
+                shared_data_file.push_back(drive_character);
+                shared_data_file += u":\\system\\shareddata\\";
+                shared_data_file += uid_as_hex_directory(related_uid);
+                shared_data_file += u".ini";
+                add_app_export_path(io, shared_data_file, app_drive,
+                                    seen_virtual_paths, result);
+            }
+
+            std::u16string system_data_directory;
+            system_data_directory.push_back(drive_character);
+            system_data_directory += u":\\system\\data\\";
+            add_matching_export_children(io, system_data_directory, app_drive,
+                                         save_name_tokens, seen_virtual_paths, result);
+
+            std::u16string shared_data_directory;
+            shared_data_directory.push_back(drive_character);
+            shared_data_directory += u":\\system\\shareddata\\";
+            add_matching_export_children(io, shared_data_directory, app_drive,
+                                         save_name_tokens, seen_virtual_paths, result);
+        }
+
+        if (result.empty()) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to export app 0x{:X}: no exportable files were found", app_uid);
+        }
+
+        return result;
+    }
+
+    bool launcher::uninstall_app(std::uint32_t app_uid) {
+        if (!alserv) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to uninstall app 0x{:X}: app list service is unavailable", app_uid);
+            return false;
+        }
+
+        apa_app_registry *registration = alserv->get_registration(app_uid);
+        if (!registration) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to uninstall app 0x{:X}: app registration was not found", app_uid);
+            return false;
+        }
+
+        const drive_number app_drive = registration->land_drive;
+        const std::u16string app_path = normalize_app_package_path(
+            registration->mandatory_info.app_path.to_std_string(nullptr), app_drive);
+        const std::u16string registry_path = normalize_app_package_path(
+            registration->rsc_path, app_drive);
+        const std::u16string localized_registry_path = normalize_app_package_path(
+            registration->localised_info_rsc_path, app_drive);
+        const std::u16string icon_path = normalize_app_package_path(
+            registration->icon_file_path, app_drive);
+
+        manager::packages *package_manager = sys->get_packages();
+        if (!package_manager) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to uninstall app 0x{:X}: package manager is unavailable", app_uid);
+            return false;
+        }
+
+        std::uint32_t matched_package_uid = 0;
+        std::int32_t matched_package_index = 0;
+        int highest_score = 0;
+        int highest_score_matches = 0;
+
+        for (const auto &package_entry : *package_manager) {
+            const package::object &pkg = package_entry.second;
+            if (!pkg.is_removable) {
+                continue;
+            }
+
+            int score = package_match_score_for_app(pkg, app_uid, app_path, registry_path,
+                                                    localized_registry_path, icon_path, app_drive);
+
+            // Some packages use the same UID as their only app. This is a safe fallback,
+            // but an actual owned-file or folder match always has a much higher score.
+            if ((score == 0) && (pkg.uid == app_uid)) {
+                score = 1;
+            }
+
+            if (score > highest_score) {
+                highest_score = score;
+                highest_score_matches = 1;
+                matched_package_uid = pkg.uid;
+                matched_package_index = pkg.index;
+            } else if ((score > 0) && (score == highest_score)) {
+                highest_score_matches++;
+            }
+        }
+
+        if ((highest_score <= 0) || (highest_score_matches != 1)) {
+            io_system *io = sys->get_io_system();
+            const std::u16string app_directory = parent_directory_with_separator(app_path);
+
+            if (!delete_legacy_app_directory(io, app_directory, app_drive)) {
+                return false;
+            }
+
+            // Remove only known registration/icon files if they live outside the private
+            // app directory. The directory itself has already been deleted above.
+            delete_known_app_registry_files(io, app_path, registry_path,
+                                            localized_registry_path, icon_path);
+
+            alserv->rescan_registries(io);
+
+            if (alserv->get_registration(app_uid) != nullptr) {
+                LOG_ERROR(eka2l1::FRONTEND_UI,
+                          "AppDelete app 0x{:X} is still registered after deleting {}",
+                          app_uid, common::ucs2_to_utf8(app_directory));
+                return false;
+            }
+
+            LOG_INFO(eka2l1::FRONTEND_UI,
+                     "AppDelete: app 0x{:X} removed by guarded legacy cleanup",
+                     app_uid);
+            return true;
+        }
+
+        package::object *matched_package = package_manager->package(matched_package_uid,
+                                                                    matched_package_index);
+        if (!matched_package) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to uninstall app 0x{:X}: matched package 0x{:X}/{} disappeared",
+                      app_uid, matched_package_uid, matched_package_index);
+            return false;
+        }
+
+        const std::u16string matched_package_name = matched_package->package_name;
+
+        if (!package_manager->uninstall_package(*matched_package)) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "Unable to uninstall app 0x{:X}: package uninstall failed", app_uid);
+            return false;
+        }
+
+        // Old SIS-v1 registries can omit one or more application registry files from the
+        // uninstall list. Remove only the files that belong to the selected app registry.
+        io_system *io = sys->get_io_system();
+        delete_known_app_registry_files(io, app_path, registry_path,
+                                        localized_registry_path, icon_path);
+
+        // The package manager removes the registered files, but on some EKA1/S60 packages
+        // it leaves the now empty private application directory behind. Remove the exact
+        // guarded X:\\system\\apps\\<app>\\ directory as the final cleanup step.
+        // Newer apps live in X:\\system\\programs\\ (\\sys\\bin\\) or the drive root, which are
+        // shared with other apps and always stay, so they have no such directory to remove.
+        const std::u16string app_directory = parent_directory_with_separator(app_path);
+        if (is_safe_legacy_app_directory(app_directory, app_drive) && io->exist(app_directory)) {
+            if (!delete_legacy_app_directory(io, app_directory, app_drive)) {
+                LOG_ERROR(eka2l1::FRONTEND_UI,
+                          "AppDelete: could not remove app directory {} after package uninstall",
+                          common::ucs2_to_utf8(app_directory));
+                return false;
+            }
+        }
+
+        alserv->rescan_registries(io);
+
+        if (alserv->get_registration(app_uid) != nullptr) {
+            LOG_ERROR(eka2l1::FRONTEND_UI,
+                      "App 0x{:X} is still registered after package uninstall", app_uid);
+            return false;
+        }
+
+        LOG_INFO(eka2l1::FRONTEND_UI,
+                 "AppDelete: app 0x{:X} removed through package {}",
+                 app_uid, common::ucs2_to_utf8(matched_package_name));
+        return true;
+    }
+
+    void launcher::mount_sd_card(std::string &path) {
+        std::u16string upath = common::utf8_to_ucs2(path);
+
+        io_system *io = sys->get_io_system();
+        io->unmount(drive_e);
+        io->mount_physical_path(drive_e, drive_media::physical,
+            io_attrib_removeable | io_attrib_write_protected, upath);
+    }
+
+    void launcher::load_config() {
+        conf->deserialize();
+    }
+
+    void launcher::set_language(std::uint32_t language_id) {
+        set_language_current(static_cast<language>(language_id));
+    }
+
+    void launcher::set_rtos_level(std::uint32_t level) {
+        kern->get_ntimer()->set_realtime_level(static_cast<realtime_level>(level));
+    }
+
+    void launcher::update_app_setting(std::uint32_t uid) {
+        kern->get_app_settings()->update_setting(uid);
+    }
+
+    void launcher::draw(drivers::graphics_command_builder &builder, epoc::screen *scr,
+                        std::uint32_t window_width, std::uint32_t window_height) {
+        eka2l1::rect viewport;
+        eka2l1::rect src;
+        eka2l1::rect dest;
+
+        drivers::filter_option filter = conf->nearest_neighbor_filtering ? drivers::filter_option::nearest : drivers::filter_option::linear;
+
+        eka2l1::vec2 swapchain_size(window_width, window_height);
+        viewport.size = swapchain_size;
+
+        builder.set_swapchain_size(swapchain_size);
+
+        builder.backup_state();
+        builder.bind_bitmap(0);
+
+        builder.set_feature(drivers::graphics_feature::cull, false);
+        builder.set_feature(drivers::graphics_feature::depth_test, false);
+        builder.set_feature(eka2l1::drivers::graphics_feature::blend, false);
+        builder.set_feature(drivers::graphics_feature::clipping, false);
+        builder.set_feature(drivers::graphics_feature::stencil_test, false);
+        builder.set_viewport(viewport);
+
+        builder.clear({ background_color_[0] / 255.0f, background_color_[1] / 255.0f, background_color_[2] / 255.0f, 1.0f, 0.0f, 0.0f },
+            drivers::draw_buffer_bit_color_buffer);
+
+        if (!background_img_ && !background_img_path_.empty()) {
+            int comp = 0;
+
+            FILE *f = eka2l1::common::open_c_file(background_img_path_, "rb");
+            if (!f) {
+                LOG_ERROR(eka2l1::FRONTEND_UI, "Unable to load background texture!");
+            } else {
+                // Not load again even if fail
+                background_img_path_.clear();
+                stbi_uc *data = stbi_load_from_file(f, &background_width, &background_height, &comp, STBI_rgb_alpha);
+                fclose(f);
+
+                if (!data) {
+                    LOG_ERROR(eka2l1::FRONTEND_UI, "Unable to decode background texture!");
+                } else {
+                    background_img_ = eka2l1::drivers::create_texture(sys->get_graphics_driver(), 2, 0,
+                                                                      eka2l1::drivers::texture_format::rgba, eka2l1::drivers::texture_format::rgba,
+                                                                      eka2l1::drivers::texture_data_type::ubyte, data,
+                                                                      background_width * background_height * 4,
+                                                                      eka2l1::vec3(background_width, background_height, 0));
+                }
+
+                if (!background_img_) {
+                    LOG_ERROR(eka2l1::FRONTEND_UI, "Unable to create background texture!");
+                } else {
+                    builder.set_texture_filter(background_img_, true, eka2l1::drivers::filter_option::nearest);
+                }
+
+                stbi_image_free(data);
+            }
+        }
+
+        const bool skin_mode = (scale_type_ == SCREEN_SCALE_TYPE_FIT_WITH_SKIN);
+
+        if (background_img_ != 0) {
+            eka2l1::rect draw_image_rect = skin_mode
+                ? calculate_skin_draw_rect(swapchain_size, background_width, background_height)
+                : calculate_background_draw_rect(swapchain_size, background_width, background_height, keep_bg_aspect_);
+
+            builder.set_feature(eka2l1::drivers::graphics_feature::blend, true);
+            builder.blend_formula(eka2l1::drivers::blend_equation::add, eka2l1::drivers::blend_equation::add,
+                                  eka2l1::drivers::blend_factor::frag_out_alpha, eka2l1::drivers::blend_factor::one_minus_frag_out_alpha,
+                                  eka2l1::drivers::blend_factor::one, eka2l1::drivers::blend_factor::one_minus_frag_out_alpha);
+            builder.set_brush_color_detail(eka2l1::vec4(255, 255, 255, eka2l1::common::clamp<int>(0, 255, background_img_opacity_ * 255)));
+            builder.draw_bitmap(background_img_, 0, draw_image_rect, eka2l1::rect(), eka2l1::vec2(0, 0), 0.0f, eka2l1::drivers::bitmap_draw_flag_use_brush);
+            builder.set_feature(eka2l1::drivers::graphics_feature::blend, false);
+        }
+
+        if (scr) {
+            auto &crr_mode = scr->current_mode();
+
+            eka2l1::vec2 size = crr_mode.size;
+            src.size = size;
+
+            const bool use_skin_frame = skin_mode && (background_img_ != 0)
+                && (background_width > 0) && (background_height > 0);
+
+            eka2l1::vec2 available_size = swapchain_size;
+            eka2l1::vec2 available_top(0, 0);
+
+            if (use_skin_frame) {
+                const eka2l1::rect skin_draw_rect = calculate_skin_draw_rect(
+                    swapchain_size, background_width, background_height);
+
+                available_top.x = skin_draw_rect.top.x + static_cast<int>(skin_draw_rect.size.x * SKIN_SCREEN_LEFT_NORM);
+                available_top.y = skin_draw_rect.top.y + static_cast<int>(skin_draw_rect.size.y * SKIN_SCREEN_TOP_NORM);
+                available_size.x = static_cast<int>(skin_draw_rect.size.x * SKIN_SCREEN_WIDTH_NORM);
+                available_size.y = static_cast<int>(skin_draw_rect.size.y * SKIN_SCREEN_HEIGHT_NORM);
+            }
+
+            const std::uint32_t effective_scale_type =
+                (scale_type_ == SCREEN_SCALE_TYPE_FIT_WITH_SKIN) ? SCREEN_SCALE_TYPE_FIT : scale_type_;
+
+            float width = 0;
+            float height = 0;
+            std::uint32_t x = 0;
+            std::uint32_t y = 0;
+
+            switch (effective_scale_type) {
+                case SCREEN_SCALE_TYPE_NONE:
+                    // without scaling
+                    width = size.x;
+                    height = size.y;
+                    break;
+                case SCREEN_SCALE_TYPE_FIT:
+                    // try to fit in width
+                    width = available_size.x;
+                    height = size.y * available_size.x / size.x;
+
+                    if (height > available_size.y) {
+                        // if height is too big, then fit in height
+                        height = available_size.y;
+                        width = size.x * available_size.y / size.y;
+                    }
+                    break;
+                case SCREEN_SCALE_TYPE_FILL:
+                    // scaling without preserving the aspect ratio:
+                    // just stretch the picture to full screen
+                    // Upscale factor is the min factor of scale width and height
+                    width = available_size.x;
+                    height = available_size.y;
+                    break;
+            }
+
+            width = width * scale_ratio_ / 100;
+            height = height * scale_ratio_ / 100;
+
+            if (use_skin_frame) {
+                // x and y are unsigned, a scale ratio above 100% must not push them below zero
+                x = static_cast<std::uint32_t>(std::max(0.0f, available_top.x + (available_size.x - width) / 2));
+                y = static_cast<std::uint32_t>(std::max(0.0f, available_top.y + (available_size.y - height) / 2));
+            } else {
+                switch (gravity_) {
+                    case 0: // left
+                        x = 0;
+                        y = (swapchain_size.y - height) / 2;
+                        break;
+                    case 1: // top
+                        x = (swapchain_size.x - width) / 2;
+                        y = 0;
+                        break;
+                    case 2: // center
+                        x = (swapchain_size.x - width) / 2;
+                        y = (swapchain_size.y - height) / 2;
+                        break;
+                    case 3: // right
+                        x = swapchain_size.x - width;
+                        y = (swapchain_size.y - height) / 2;
+                        break;
+                    case 4: // bottom
+                        x = (swapchain_size.x - width) / 2;
+                        y = swapchain_size.y - height;
+                        break;
+                }
+            }
+
+            const float scale_x = width / static_cast<float>(size.x);
+            const float scale_y = height / static_cast<float>(size.y);
+
+            scr->set_native_scale_factor(sys->get_graphics_driver(), scale_x, scale_y);
+
+            scr->absolute_pos.x = static_cast<int>(x);
+            scr->absolute_pos.y = static_cast<int>(y);
+
+            dest.top = eka2l1::vec2(x, y);
+            dest.size = eka2l1::vec2(width, height);
+
+            drivers::advance_draw_pos_around_origin(dest, scr->ui_rotation);
+
+            if (scr->ui_rotation % 180 != 0) {
+                std::swap(dest.size.x, dest.size.y);
+                std::swap(src.size.x, src.size.y);
+            }
+
+            src.size *= scr->display_scale_factor;
+
+            std::uint32_t flags = 0;
+            if (scr->flags_ & epoc::screen::FLAG_SCREEN_UPSCALE_FACTOR_LOCK) {
+                flags |= drivers::bitmap_draw_flag_use_upscale_shader;
+            }
+
+            builder.set_texture_filter(scr->screen_texture, true, filter);
+            builder.set_texture_filter(scr->screen_texture, false, filter);
+            builder.draw_bitmap(scr->screen_texture, 0, dest, src, eka2l1::vec2(0, 0),
+                                 static_cast<float>(scr->ui_rotation), flags);
+        }
+
+        builder.load_backup_state();
+    }
+
+    std::vector<std::string> launcher::get_language_ids() {
+        std::vector<std::string> languages;
+
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+        if (!dvcs.empty()) {
+            auto &dvc = dvcs[conf->device];
+            for (int language : dvc.languages) {
+                languages.push_back(std::to_string(language));
+            }
+        }
+        return languages;
+    }
+
+    std::vector<std::string> launcher::get_language_names() {
+        std::vector<std::string> languages;
+
+        device_manager *dvc_mngr = sys->get_device_manager();
+        auto &dvcs = dvc_mngr->get_devices();
+        if (!dvcs.empty()) {
+            auto &dvc = dvcs[conf->device];
+            for (int language : dvc.languages) {
+                const std::string lang_name = common::get_language_name_by_code(language);
+                languages.push_back(lang_name);
+            }
+        }
+        return languages;
+    }
+
+    void launcher::set_screen_params(std::uint32_t background_color, std::uint32_t scale_ratio,
+                                     std::uint32_t scale_type, std::uint32_t gravity,
+                                     const std::string &bg_img_path,
+                                     float bg_img_opacity, bool bg_keep_aspect_ratio) {
+        background_color_[0] = (background_color >> 16) & 0xFF;
+        background_color_[1] = (background_color >> 8) & 0xFF;
+        background_color_[2] = background_color & 0xFF;
+        scale_ratio_ = scale_ratio;
+        scale_type_ = scale_type;
+        gravity_ = gravity;
+        background_img_path_ = bg_img_path;
+        background_img_opacity_ = bg_img_opacity;
+        keep_bg_aspect_ = bg_keep_aspect_ratio;
+    }
+
+    bool launcher::open_input_view(const std::u16string &initial_text, const int max_len,
+                                   drivers::ui::input_dialog_complete_callback complete_callback) {
+        if (input_complete_callback_) {
+            return false;
+        }
+
+        input_complete_callback_ = complete_callback;
+
+        JNIEnv *env = common::jni::environment();
+        jclass clazz = common::jni::find_class("com/github/eka2l1/emu/Emulator");
+        jmethodID input_method = env->GetStaticMethodID(clazz, "showInputDialog", "(Ljava/lang/String;I)V");
+        std::string text = common::ucs2_to_utf8(initial_text);
+        jstring jtext = env->NewStringUTF(text.c_str());
+        env->CallStaticVoidMethod(clazz, input_method, jtext, (jint)max_len);
+        return true;
+    }
+
+    void launcher::close_input_view() {
+        JNIEnv *env = common::jni::environment();
+        jclass clazz = common::jni::find_class("com/github/eka2l1/emu/Emulator");
+        jmethodID input_method = env->GetStaticMethodID(clazz, "closeInputDialog", "()V");
+        env->CallStaticVoidMethod(clazz, input_method);
+    }
+
+    bool launcher::open_question_dialog(const std::u16string &text, const std::u16string &button1_text,
+                              const std::u16string &button2_text,
+                              drivers::ui::yes_no_dialog_complete_callback complete_callback) {
+        if (yes_no_complete_callback_) {
+            return false;
+        }
+
+        yes_no_complete_callback_ = complete_callback;
+
+        JNIEnv *env = common::jni::environment();
+        jclass clazz = common::jni::find_class("com/github/eka2l1/emu/Emulator");
+        jmethodID open_method = env->GetStaticMethodID(clazz, "showQuestionDialog", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+        std::string question_text_utf8 = common::ucs2_to_utf8(text);
+        std::string yes_text_utf8 = common::ucs2_to_utf8(button1_text);
+        std::string no_text_utf8 = common::ucs2_to_utf8(button2_text);
+
+        jstring jtext_question = env->NewStringUTF(question_text_utf8.c_str());
+        jstring jtext_yes = env->NewStringUTF(yes_text_utf8.c_str());
+        jstring jtext_no = env->NewStringUTF(no_text_utf8.c_str());
+
+        env->CallStaticVoidMethod(clazz, open_method, jtext_question, jtext_yes, jtext_no);
+        return true;
+    }
+
+    void launcher::on_finished_text_input(const std::string &text, const bool force_close) {
+        if (input_complete_callback_) {
+            input_complete_callback_(common::utf8_to_ucs2(text));
+            input_complete_callback_ = nullptr;
+        }
+    }
+
+    void launcher::on_question_dialog_finished(const int result) {
+        if (yes_no_complete_callback_) {
+            yes_no_complete_callback_(result);
+            yes_no_complete_callback_ = nullptr;
+        }
+    }
+
+    int launcher::install_ngage_game(const std::string &path) {
+        return static_cast<int>(sys->install_ngage_game_card(path,
+                                                             nullptr, nullptr));
+    }
+
+    bool launcher::install_ng2_game_licenses(const std::string &content) {
+        return rightsserv->import_ng2l(content, success_license_games, failed_license_games);
+    }
+
+    std::vector<std::string> launcher::get_success_installed_license_games() {
+        return success_license_games;
+    }
+
+    std::vector<std::string> launcher::get_failed_installed_license_games() {
+        return failed_license_games;
+    }
+
+    void launcher::set_current_mmc_id(const std::string &new_mmc_id) {
+        conf->current_mmc_id = new_mmc_id;
+    }
+
+    bool launcher::save_screenshot_to(const std::string &path) {
+        if (!winserv) {
+            return false;
+        }
+
+        epoc::screen *scr = winserv->get_current_focus_screen();
+
+        if (!scr) {
+            return false;
+        }
+
+        eka2l1::vec2 scr_size_scaled = scr->current_mode().size * scr->display_scale_factor;
+        std::size_t total_data_size = scr_size_scaled.x * scr_size_scaled.y * 4;
+
+        if (screenshot_buffer_.size() < total_data_size) {
+            screenshot_buffer_.resize(total_data_size);
+        }
+
+        if (!drivers::read_bitmap(sys->get_graphics_driver(), winserv->get_current_focus_screen()->screen_texture,
+                             eka2l1::point(0, 0), scr_size_scaled, 32, screenshot_buffer_.data())) {
+            return false;
+        }
+
+        struct write_png_context {
+            FILE *dest_file_;
+            std::string path_;
+
+            explicit write_png_context(const std::string &path)
+                : path_(path) {
+                 dest_file_ = common::open_c_file(path, "wb");
+            }
+
+            ~write_png_context() {
+                if (dest_file_) {
+                    fclose(dest_file_);
+                }
+            }
+
+            void write(void *data, int size) {
+                if (!dest_file_) {
+                    return;
+                }
+
+                if (fwrite(data, 1, size, dest_file_) != size) {
+                    fclose(dest_file_);
+                    common::remove(path_);
+
+                    dest_file_ = nullptr;
+                }
+            }
+        };
+
+        write_png_context png_write_context(path);
+        if (stbi_write_png_to_func([](void * context, void *data, int size) { (reinterpret_cast<write_png_context*>(context))->write(data, size); },
+                                   &png_write_context, scr_size_scaled.x, scr_size_scaled.y, 4, screenshot_buffer_.data(), scr_size_scaled.x * 4) == 0) {
+            return false;
+        }
+
+        return true;
+    }
+}

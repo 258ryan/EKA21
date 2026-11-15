@@ -1,0 +1,286 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name" translatable="false">EKA2L1 Dual Stick</string>
+    <string name="error">错误</string>
+    <string name="no_data">无数据</string>
+    <string name="search">搜索</string>
+    <string name="about">关于</string>
+    <string name="settings">设置</string>
+    <string name="packages">已安装的软件包</string>
+    <string name="devices">设备</string>
+    <string name="switch_devices" />
+    <string name="profiles">配置</string>
+    <string name="processing">处理中……</string>
+    <string name="completed">处理完成！</string>
+    <string name="cancelled" />
+    <string name="remove">移除</string>
+    <string name="mount_sd">挂载MMC/SD卡</string>
+    <string name="no_devices_found">未找到设备</string>
+    <string name="exit">退出</string>
+    <string name="rename">重命名</string>
+    <string name="save_log">保存日志</string>
+    <string name="take_screenshot">Take screenshot</string>
+    <string name="screenshot">Screenshot</string>
+    <string name="take_screenshot_success">Screenshot saved to %s!</string>
+    <string name="take_screenshot_fail">Failed to take screenshot!</string>
+    <string name="opengl_required">此应用需要OpenGL ES 3.0及更高版本。</string>
+    <string name="warning">警告</string>
+    <string name="scoped_storage_warning">您的用户数据存储在卸载应用时会被删除的位置：
+</string>
+    <string name="install_ng_game">安装 N-Gage 游戏</string>
+    <string name="notify_dialog_title">Notification</string>
+    <string name="grid_app_list_mode">Grid mode</string>
+    <string name="list_app_list_mode">List mode</string>
+    <string name="mounted_mmc_ok_and_use_id_in_folder_name">Completed! Using MMC ID found in folder name.</string>
+    <string name="ng1_menu_title">N-Gage</string>
+    <string name="ng2_menu_title">N-Gage 2.0</string>
+    <string name="install_preconfigured_pack">安装预配置包</string>
+    <string name="delete_existing_data_title">删除现有数据</string>
+    <string name="delete_existing_data">您要删除现有的模拟器数据（设备、应用、游戏等）吗？</string>
+    <string name="delete_device_failed">无法删除设备。</string>
+    <string name="delete_device_message">删除所选设备？这会移除其 ROM 文件夹以及 devices.yml 中的条目。</string>
+    <string name="delete_device_title">删除设备</string>
+    <string name="fail_to_install_preconfigured_pack">安装预配置包失败！</string>
+    <string name="fail_to_install_preconfigured_pack_and_rollback">安装预配置包失败！已回滚到旧数据！</string>
+    <string name="fail_to_export_preconfigured_pack">导出预配置包失败！</string>
+    <string name="choose_installation_type">选择安装类型</string>
+    <string name="choose_installation_type_instruction">使用现有数据包可快速开始，或者通过其 ROM/固件安装新设备，从头开始。</string>
+    <string name="preconfigured_pack">预配置包</string>
+    <string name="rom_or_firmware">ROM/Firmware</string>
+    <string name="save_launch_file_success">Launch file saved as %s!</string>
+    <string name="install">安装</string>
+    <string name="rescan_devices">扫描设备</string>
+    <string name="device_dump">从设备上导出的ROM</string>
+    <string name="rpkg" translatable="false">RPKG</string>
+    <string name="rom" translatable="false">ROM</string>
+    <string name="path_to_rpkg">RPKG路径</string>
+    <string name="path_to_rom">ROM路径</string>
+    <string name="firmware">设备固件文件</string>
+    <string name="path_to_firmware">VPL文件路径</string>
+    <string name="install_method">选择安装源</string>
+    <string name="enter_new_name">输入新设备名称</string>
+    <string name="mode">显示方式</string>
+    <string name="no_device_dialog_title">未安装设备！</string>
+    <string name="no_device_installed">请安装设备。安装塞班设备需要从设备上导出的ROM或者设备的固件文件。\n\n注意： 每个应用都需要合适的塞班设备才能运行。</string>
+    <string name="install_device_note_may_need_rpkg">对于S60v2或更高版本的设备，您可能需要提供额外的RPKG文件。如果安装程序检测到需要RPKG文件，路径选择器将会自动弹出。</string>
+    <string name="recommended_devices_to_install">推荐安装的设备</string>
+    <string name="wiki_info">欲了解更多关于设备安装的信息，请查看我们的wiki：</string>
+    <string name="wiki_link" translatable="false"> &lt;a href="https://eka2l1.miraheze.org/wiki/Official_Links"&gt;eka2l1.miraheze.org&lt;/a&gt;</string>
+    <string name="install_rpkg_corrupt">RPKG文件已损坏！</string>
+    <string name="install_rpkg_file_not_found">无法打开指定的RPKG文件！</string>
+    <string name="install_raw_dump_fail_to_copy">复制原始转储文件到目标路径失败！</string>
+    <string name="install_rom_fail_to_copy">复制ROM到目标路径失败！</string>
+    <string name="install_rpkg_insufficent_size">RPKG文件太小，导出的固件可能不完整！</string>
+    <string name="install_already_exist">要安装的设备已经存在！</string>
+    <string name="install_product_determine_fail">获取产品信息失败！</string>
+    <string name="install_device_vpl_invalid_msg">固件描述文件（VPL）无效 ！</string>
+    <string name="install_device_rofs_corrupt_msg">ROFS文件已损坏！</string>
+    <string name="install_device_rom_corrupt_msg">ROM文件已损坏！</string>
+    <string name="install_device_fpsx_corrupt_msg">FPSX文件已损坏！</string>
+    <string name="pref_general_title">常规</string>
+    <string name="pref_system_title">系统</string>
+    <string name="pref_android_title" translatable="false">Android</string>
+    <string name="pref_control_key_binding_sect_title">按键绑定</string>
+    <string name="pref_theme">主题</string>
+    <string name="pref_theme_light">浅色</string>
+    <string name="pref_theme_dark">深色</string>
+    <string name="pref_enable_virtual_keyboard">启用虚拟键盘</string>
+    <string name="pref_enable_actionbar">启用动作栏</string>
+    <string name="pref_enable_statusbar">启用状态栏</string>
+    <string name="pref_wakelock">保持屏幕常亮</string>
+    <string name="pref_enable_vibration">开启振动</string>
+    <string name="pref_emulator_dir">工作目录</string>
+    <string name="pref_launch_file_dir">Launch file directory</string>
+    <string name="pref_emulator_dir_cant_change">The working directory can\'t be changed!</string>
+    <string name="pref_general_utilities_nearest_neighbor_filtering_msg">启用最近邻域过滤</string>
+    <string name="pref_system_language_option_name">语言</string>
+    <string name="pref_system_real_time_accuracy_str">实时精度</string>
+    <string name="pref_system_real_time_accuracy_level_name_low">低</string>
+    <string name="pref_system_real_time_accuracy_level_name_mid">中</string>
+    <string name="pref_system_real_time_accuracy_level_name_high">高</string>
+    <string name="pref_system_time_delay_option_name">延迟时间</string>
+    <string name="pref_system_setting_inheritance_option_name">设置继承</string>
+    <string name="pref_hal_imei_option_name" translatable="false">IMEI</string>
+    <string name="pref_mmc_id" translatable="false">MMC ID</string>
+    <string name="emulated_screen_rotation_item_name">旋转</string>
+    <string name="emulated_screen_refresh_rate_item_name">刷新率</string>
+    <string name="pref_device_display_name">Phone name</string>
+    <string name="hide_system_apps">隐藏系统应用</string>
+    <string name="pref_bt_netplay" translatable="false">Bluetooth Netplay</string>
+    <string name="pref_bt_netplay_direct_ips_manager">直属经理</string>
+    <string name="enter_address">输入地址</string>
+    <string name="address">地址</string>
+    <string name="port">端口</string>
+    <string name="pref_bt_netplay_mode_off">关闭</string>
+    <string name="pref_bt_netplay_mode_direct_ip">直接IP</string>
+    <string name="pref_bt_netplay_mode_lan">局域网</string>
+    <string name="pref_bt_netplay_mode_server">服务器</string>
+    <string name="pref_bt_netplay_enable_upnp">启用 UPnP (适用于 IPv4 公共播放)</string>
+    <string name="pref_bt_netplay_server_address">服务器地址</string>
+    <string name="pref_bt_netplay_password">登录密码:</string>
+    <string name="pref_bt_netplay_port_offset">偏移端口</string>
+    <string name="action_context_delete">删除</string>
+    <string name="action_context_rename">重命名</string>
+    <string name="action_context_shortcut">创建快捷方式</string>
+    <string name="action_context_launch_file">Create launch file</string>
+    <string name="start">开始</string>
+    <string name="reset_settings">重置设置</string>
+    <string name="reset_layout">重置按键布局</string>
+    <string name="load_profile">加载配置</string>
+    <string name="save_profile">保存配置</string>
+    <string name="pref_screen_options">屏幕选项</string>
+    <string name="pref_scale_ratio">缩放比例(%)</string>
+    <string name="pref_background">背景</string>
+    <string name="pref_background_image">Background image</string>
+    <string name="pref_background_image_view">查看</string>
+    <string name="pref_background_image_empty">Not set</string>
+    <string name="pref_background_image_clear">清除</string>
+    <string name="pref_background_image_fail_to_set">Fail to set background image!</string>
+    <string name="background_image">Background image</string>
+    <string name="background_image_opacity">BG image opacity</string>
+    <string name="background_image_keep_aspect_ratio">Keep BG image aspect ratio</string>
+    <string name="pref_virtual_keyboard_options">虚拟键盘</string>
+    <string name="pref_vk_show">显示键盘</string>
+    <string name="pref_vk_feedback">振动反馈</string>
+    <string name="pref_touch_input">触摸输入</string>
+    <string name="pref_vk_back">按钮</string>
+    <string name="pref_vk_fore">标识</string>
+    <string name="pref_vk_outline">边框</string>
+    <string name="pref_color_hint" translatable="false">RGB</string>
+    <string name="pref_vk_alpha">不透明度: </string>
+    <string name="pref_vk_hide_delay">隐藏延迟: </string>
+    <string name="pref_unit_ms">毫秒</string>
+    <string name="pref_vk_sel_fore">标签 (P)</string>
+    <string name="pref_vk_sel_back">按键 (P)</string>
+    <string name="pref_sys_props">系统属性</string>
+    <string name="pref_orientation">屏幕方向​​​​​​​​​​​​​​</string>
+    <string name="pref_orientation_default">默认</string>
+    <string name="pref_orientation_auto">自动</string>
+    <string name="pref_orientation_port">纵向</string>
+    <string name="pref_orientation_land">横向</string>
+    <string name="pref_vk_type">键盘类型</string>
+    <string name="pref_vk_type_custom">自定义</string>
+    <string name="pref_vk_type_phone">手机</string>
+    <string name="pref_vk_type_phone_arrows">手机（箭头）</string>
+    <string name="pref_vk_hide_hint">禁用</string>
+    <string name="pref_button_shape_title">按钮形状</string>
+    <string name="pref_button_shape_oval">椭圆</string>
+    <string name="pref_button_shape_rect">矩形</string>
+    <string name="pref_button_shape_round">圆角矩形</string>
+    <string name="pref_input_devices_title">输入设备</string>
+    <string name="pref_screen_gravity">屏幕对齐</string>
+    <string name="pref_screen_gravity_bottom">底部</string>
+    <string name="pref_screen_gravity_center">居中</string>
+    <string name="pref_screen_gravity_left">左</string>
+    <string name="pref_screen_gravity_right">右</string>
+    <string name="pref_screen_gravity_top">上方</string>
+    <string name="pref_screen_scale_type">缩放类型</string>
+    <string name="pref_screen_scale_type_fill">全屏（忽略纵横比）</string>
+    <string name="pref_screen_scale_type_fit">适应屏幕（保持纵横比）</string>
+    <string name="pref_screen_scale_type_fit_with_skin">适应屏幕（使用 N-Gage QD 皮肤）</string>
+    <string name="pref_screen_scale_type_none">原始分辨率</string>
+    <string name="pref_screen_use_notch">Use notch</string>
+    <string name="pref_screen_scale_use_shader">使用着色器进行缩放</string>
+    <string name="pref_screen_upscale_shader">缩放着色器</string>
+    <string name="pref_screen_default_shader">默认</string>
+    <string name="default_label">"%s (默认)"</string>
+    <string name="not_saved_exists">已经存在</string>
+    <string name="error_name">输入名称！</string>
+    <string name="set_as_default">设置为默认</string>
+    <string name="edit">编辑</string>
+    <string name="add">添加</string>
+    <string name="add_profile_description">创建新配置</string>
+    <string name="enter_name">输入名称</string>
+    <string name="set_default_profile_description">为以后安装的所有应用程序使用此配置</string>
+    <string name="error_name_exists">已存在，请输入其他名称</string>
+    <string name="extensive_logging">大规模日志记录</string>
+    <string name="virtual_key_left_soft" translatable="false">L</string>
+    <string name="virtual_key_right_soft" translatable="false">R</string>
+    <string name="virtual_key_d" translatable="false">D</string>
+    <string name="virtual_key_c" translatable="false">C</string>
+    <string name="virtual_key_left" translatable="false">←</string>
+    <string name="virtual_key_right" translatable="false">→</string>
+    <string name="virtual_key_up" translatable="false">↑</string>
+    <string name="virtual_key_down" translatable="false">↓</string>
+    <string name="virtual_key_f" translatable="false">F</string>
+    <string name="virtual_key_1" translatable="false">1</string>
+    <string name="virtual_key_2" translatable="false">2</string>
+    <string name="virtual_key_3" translatable="false">3</string>
+    <string name="virtual_key_4" translatable="false">4</string>
+    <string name="virtual_key_5" translatable="false">5</string>
+    <string name="virtual_key_6" translatable="false">6</string>
+    <string name="virtual_key_7" translatable="false">7</string>
+    <string name="virtual_key_8" translatable="false">8</string>
+    <string name="virtual_key_9" translatable="false">9</string>
+    <string name="virtual_key_0" translatable="false">0</string>
+    <string name="virtual_key_star" translatable="false">*</string>
+    <string name="virtual_key_pound" translatable="false">#</string>
+    <string name="mapping_dialog_title">按下一个按键</string>
+    <string name="mapping_dialog_message" formatted="false">当前映射：%1$s</string>
+    <string name="reset_mapping">重置</string>
+    <string name="layout_edit_finished">编辑完成</string>
+    <string name="layout_edit_finish">保存键位</string>
+    <string name="layout_edit_mode">编辑键位</string>
+    <string name="layout_scale_mode">调整键位大小</string>
+    <string name="layout_switch">切换键位</string>
+    <string name="hide_buttons">隐藏虚拟按键</string>
+    <string name="confirmation_required">需要确认</string>
+    <string name="force_close_confirmation">强制关闭应用程序可能会导致数据丢失甚至损坏！\n继续?</string>
+    <string name="log_saved">日志已保存</string>
+    <string name="enter_text">输入文本</string>
+    <string name="about_website" translatable="false">&lt;BR&gt;Website: &lt;a href="https://eka2l1.github.io"&gt;eka2l1.github.io&lt;/a&gt;</string>
+    <string name="about_github" translatable="false">&lt;BR&gt;GitHub: &lt;a href="https://github.com/EKA2L1/EKA2L1"&gt;github.com/EKA2L1/EKA2L1&lt;/a&gt;</string>
+    <string name="about_crowdin" translatable="false">&lt;BR&gt;Crowdin(translation): &lt;a href="https://crowdin.com/project/EKA2L1"&gt;crowdin.com/project/EKA2L1&lt;/a&gt;</string>
+    <string name="about_copyright" translatable="false">&lt;BR&gt;&lt;BR&gt;Copyright 2018-2024 EKA2L1 Team</string>
+    <string name="about_icon_author" translatable="false">dmolina007 &amp; Frenesi</string>
+    <string name="about_icon_by">&lt;BR&gt;图标设计： </string>
+    <string name="about_special_thanks_title">Special thanks</string>
+    <string name="about_special_thanks_content">  - nikita36078 for publishing the Android version on Play Store and for his help!&lt;BR&gt;  - Symbian/N-Gage OG sceners: BinPDA, pSyGAGE, Engage, zg, eskMaemo, BodyZ, Ilya Dianov, iCodeRUS, huellif, … for wonderful contributions!&lt;BR&gt;  - Phone manufacturers for creating wonderful Symbian devices: Nokia, Sony Ericsson, Samsung, Siemens, ...&lt;BR&gt;  - The N-Gage Discord community&lt;BR&gt;  - vk.com/Symbian_zone community&lt;BR&gt;  - EKA2L1 Discord community</string>
+    <string name="about_translator">Translators</string>
+    <string name="about_translator_content" translatable="false">- PhantomHorror (Українська, Беларуская, Русский)&lt;BR&gt;  - Federico Dispinzeri (ca0ss) (Italiano)&lt;BR&gt;  - Faalagorn (Polski)&lt;BR&gt;  - Nikita Shakarun (nikita36078) (Русский)&lt;BR&gt;  - Rex_sa (rex07) (العربية)&lt;BR&gt;  - Walisson Silva (w_alisson_gostoso) (português brasileiro)&lt;BR&gt;  - Allen Merlin (ShadowDumb) (简体中文)&lt;BR&gt;  - heydootdoot (Bahasa Indonesia)&lt;BR&gt;  - Ar1 (Ary404) (Bahasa Indonesia, 日本語)&lt;BR&gt;  - enriqueyair (FrenesiGG) (Español)&lt;BR&gt;  - නාමල් ජයසිංහ (nimnaya) (සිංහල)&lt;BR&gt;  - Patrick Mates (patmat99) (Deutsch, Français, Español)&lt;BR&gt;  - I HAVE GOT THE POWER (rimbado) (Azərbaycanca, Türkçe)&lt;BR&gt;  - Tauhid Alam Rifty (ChildishRifty7) (বাংলা)&lt;BR&gt;  - Div, mix (reymo.az) (Azərbaycanca, Türkçe)&lt;BR&gt;  - João (Sefhriloff) (Español, português brasileiro)&lt;BR&gt;  - Alexis Jhon Gaspar (Lucss21a) (Wikang Filipino, Bahasa Indonesia)&lt;BR&gt;  - Nokia64 (Español)&lt;BR&gt;  - Jaakko Saarikko (styxnix) (Suomi)&lt;BR&gt;  - Alonso Neto (AlonsoNeto) (português brasileiro)&lt;BR&gt;  - GiorgioHerbie (Italiano)&lt;BR&gt;  - Hafiz Mohamed (Apihplays) (Bahasa Melayu)&lt;BR&gt;  - ShahinF27 (Khan27) (Azərbaycanca)&lt;BR&gt;  - Alain Teulet (niala6433) (Français)&lt;BR&gt;  - Daichi (Daichix) (Français)&lt;BR&gt;  - Peter Tissen (Bigpet) (Deutsch)&lt;BR&gt;  - Reiju (Rejiu) (Polski, Română, Deutsch)&lt;BR&gt;  - Jeremy Belpois (JeremyBelpois) (Bahasa Indonesia)&lt;BR&gt;  - Steven Felix (stevenfelix505) (Bahasa Indonesia)&lt;BR&gt;  - OguzHans (symbianware) (Türkçe)&lt;BR&gt;  - mvenhaikal (Bahasa Indonesia)&lt;BR&gt;  - JCC (johncarreon2012) (简体中文)&lt;BR&gt;  - Huaji Nishikino (sky0hjh) (简体中文)&lt;BR&gt;  - Fire_Head (Українська)&lt;BR&gt;  - oqzhnyldz (Türkçe)&lt;BR&gt;  - sakirasci (Türkçe)&lt;BR&gt;  - zixing (zixing131) (简体中文)&lt;BR&gt;  - Aaron Feng (AaronFeng753) (简体中文)&lt;BR&gt;  - Никита Пикалов (keXa2008) (Русский)&lt;BR&gt;  - literalmente-game (português brasileiro)&lt;BR&gt;  - Osanosa (Українська)&lt;BR&gt;  - Arthur de Castro Silva (arthurion) (português brasileiro)&lt;BR&gt;  - Marco Steinhaeuser (kermie) (Deutsch)&lt;BR&gt;  - Trinh Manh Viet (manhviet) (Tiếng Việt)&lt;BR&gt;  - Foysal Bhuiyan (foysalbhuyian008) (简体中文)&lt;BR&gt;  - zesty (简体中文)&lt;BR&gt;  - sony_rich (sonyrich) (Tiếng Việt)&lt;BR&gt;  - artem78 (Русский)&lt;BR&gt;  - Văn Heo Quay Nguyễn (FDERROR) (Tiếng Việt)&lt;BR&gt;  - Cetaceaqua (简体中文)&lt;BR&gt;  - mp107 (Polski)&lt;BR&gt;  - Hiago Cardoso de Melo (bearusumyo) (português brasileiro)&lt;BR&gt;  - gwmgdemj (简体中文)&lt;BR&gt;  - Quakeman 0 (williampaiva021) (português brasileiro)&lt;BR&gt;  - Dede Kurniawan (CraX_Dev) (Bahasa Indonesia)&lt;BR&gt;  - NinPhi (Русский)&lt;BR&gt;  - Florin9doi (Română)&lt;BR&gt;  - artemka 333 (artemka333) (Беларуская)&lt;BR&gt;  - Korteks Korta (kortex.343434) (Türkçe)&lt;BR&gt;  - 123456sdfft (简体中文)&lt;BR&gt;  - crisanto valler (vallercrisanto) (Wikang Filipino)&lt;BR&gt;  - Saqala Bilaabayso (Saqala) (Polski)&lt;BR&gt;  - 115190 (Italiano)&lt;BR&gt;  - Олександр Лапин (maliar2014) (Русский)&lt;BR&gt;  - Huck Jones (huckleberrypie) (Wikang Filipino)&lt;BR&gt;  - Rachel Wang (rwang4064) (简体中文)&lt;BR&gt;  - Никита Шустол (QsFvn5bA4v) (Беларуская)&lt;BR&gt;  - Serkan Ağdeve (usta_serkan_06) (Türkçe)&lt;BR&gt;  - REMOVED_USER (Deutsch)&lt;BR&gt;  - Бато Батоболотов (Just_Bato) (Русский)&lt;BR&gt;  - හෙළබස සමූහය (HelaBasa) (සිංහල)&lt;BR&gt;  - Trần Nam Hải (E.GMR) (Tiếng Việt)&lt;BR&gt;  - GG Snake (dnfcf524) (简体中文)&lt;BR&gt;  - Khoirul Anam (Anam31) (Bahasa Indonesia)&lt;BR&gt;  - where where (wherewhere) (简体中文)&lt;BR&gt;  - XheroxJS (Español)&lt;BR&gt;  - Nicolas Augustin (nicolasaugustin.atlantis) (Français)&lt;BR&gt;  - Juan Ortiz (Kloido) (Español)&lt;BR&gt;  - mauricio toxqui citalan (mauriciotoxquicitalan) (Español)&lt;BR&gt;  - Sen Esguerra (videogameboy0783) (Wikang Filipino)&lt;BR&gt;  - Shahril Shahril (shahrilshahril609) (Bahasa Indonesia)&lt;BR&gt;  - Serkan Agdeve (serkanagdeve10) (Türkçe)&lt;BR&gt;  - Raziel Benjamin Zapata (razielben1504) (Español)&lt;BR&gt;  - Indra Saragosa (indrasaragosa946) (Bahasa Indonesia)&lt;BR&gt;  - My Talking Tom 2 Smash Hit Mod [No Pay 2 Win] (ctnhanhuy) (Tiếng Việt)&lt;BR&gt;  - CIssnei - (cissnei112) (简体中文)&lt;BR&gt;  - леонид поляков (leon412) (Русский)&lt;BR&gt;  - Johny19 Jonius19 (joniusjohny18) (Bahasa Melayu)&lt;BR&gt;  - 孙福玥 (sun2839266) (简体中文)&lt;BR&gt;  - Rumia (bagregsidoel) (Bahasa Indonesia)&lt;BR&gt;  - igor macedo (igor3891344467) (português brasileiro)&lt;BR&gt;  - Trong Thu Do (fewdspuckrito) (Tiếng Việt)&lt;BR&gt;</string>
+    <string name="version">版本： </string>
+    <string name="recommended_devices_note">注： 建议安装S60v3及以上版本的设备固件。</string>
+    <string name="recommended_devices_s60v1" translatable="false">S60v1: N-Gage</string>
+    <string name="recommended_devices_s60v2" translatable="false">S60v2: Nokia N70</string>
+    <string name="recommended_devices_s60v3" translatable="false">S60v3: Nokia 5320 XpressMusic, Nokia E5</string>
+    <string name="recommended_devices_s60v5" translatable="false">S60v5: Nokia 5800 XpressMusic, Nokia 5230</string>
+    <string name="recommended_devices_s3_belle" translatable="false">S^3, Belle: Nokia C7-00, Nokia X7-00</string>
+    <string name="install_ng_game_cant_find_data_folder">无法找到游戏数据文件夹！</string>
+    <string name="install_ng_game_more_than_one_game">There is more than one game in the given card game folder!</string>
+    <string name="install_ng_game_no_game_info_file">The game information file does not exist in the card game folder!</string>
+    <string name="install_ng_game_corrupted_game_info">游戏信息文件已损坏。请检查您的数据是否有效！</string>
+    <string name="select_app_list_mode">Choose view</string>
+    <string name="list_app_list_mode_2">2-column list</string>
+    <string name="list_app_list_mode_3">3-column list</string>
+    <string name="devices_management_menu">System management</string>
+    <string name="end_devices_menu">End device</string>
+    <string name="system_menu_title">System</string>
+    <string name="profiles_menu_title">Profiles</string>
+    <string name="install_preconfigured_pack_menu">Install preconfigured pack</string>
+    <string name="export_preconfigured_pack_menu">导出现有数据</string>
+    <string name="export_preconfigured_pack_success">预配置包已导出：%1$s</string>
+    <string name="install_ng_game_menu">Install N-Gage Game</string>
+    <string name="mount_sd_menu">Mount N-Gage MMC/SD</string>
+    <string name="save_log_menu">Save log</string>
+    <string name="rename_app_reset_hint">Leave empty to restore the original name</string>
+
+
+    <!-- EKA2L1 DualStick 0.1.5: app delete/export/import -->
+    <string name="delete_app_title">删除应用</string>
+    <string name="delete_app_message">删除“%1$s”？应用及其存档数据将被移除。</string>
+    <string name="delete_app_completed">应用已删除。</string>
+    <string name="delete_app_failed">无法删除应用。</string>
+    <string name="action_context_export">导出</string>
+    <string name="export_app_completed">应用已导出：%1$s</string>
+    <string name="export_app_failed">无法导出应用。</string>
+    <string name="export_app_processing">正在导出应用和存档数据…</string>
+    <string name="import_app_action">导入</string>
+    <string name="import_app_checking">正在检查应用备份…</string>
+    <string name="import_app_completed">应用已导入：%1$s</string>
+    <string name="import_app_failed">无法导入应用。已恢复现有数据。</string>
+    <string name="import_app_invalid">所选文件不是有效的 EKA2L1 应用备份。</string>
+    <string name="import_app_menu">导入应用/游戏备份</string>
+    <string name="import_app_message">是否导入 %1$s（UID %2$s）及其存档数据？\n\n%3$d 个文件，%4$s\n此应用的现有文件将被覆盖。</string>
+    <string name="import_app_processing">正在导入应用和存档数据…</string>
+    <string name="import_app_title">导入应用</string>
+</resources>
